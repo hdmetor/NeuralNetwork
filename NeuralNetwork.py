@@ -3,15 +3,16 @@ import numpy as np
 class NeuralNetwork:
 
     def __init__(self, shape):
-        self.shape = [2,3,1]
-        # we divide each 'column' for its max
-        # should we scale the data in another way? (x-std)/mean
+        # shape = [input, hidden, ouput]
+        self.shape = shape
 
+        # init weights
         self.weights1 = np.random.rand(self.shape[0], self.shape[1])
-
         self.weights2 = np.random.rand(self.shape[1], self.shape[2])
 
-    def init(self, input, output)
+    def init(self, input, output):
+        # we divide each 'column' for its max
+        # should we scale the data in another way? (x-std)/mean
         self.input = np.array(input) / np.amax(input, axis = 0)
         self.output = np.array(output) / np.amax(output)
 
