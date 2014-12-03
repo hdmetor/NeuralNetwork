@@ -2,13 +2,28 @@ import numpy as np
 
 class NeuralNetwork:
 
-    def __init__(self, input, output):
+    def __init__(self, shape):
         self.shape = [2,3,1]
         # we divide each 'column' for its max
         # should we scale the data in another way? (x-std)/mean
+
+        self.weights1 = np.random.rand(self.shape[0], self.shape[1])
+
+        self.weights2 = np.random.rand(self.shape[1], self.shape[2])
+
+    def init(self, input, output)
         self.input = np.array(input) / np.amax(input, axis = 0)
         self.output = np.array(output) / np.amax(output)
 
+
+
+    def feed_forward(self):
+        X = self.input
+        self.z2 =  np.dot(X, self.weights1)
+        self.a2 = sgm(self.z2)
+        self.z3 = np.dot(self.a2, self.weights2)
+
+        return sgm(self.z3)
 
 def sgm(x, der = False):
     #x could be a matrix (and in general will be)
@@ -26,3 +41,6 @@ if __name__ == '__main__':
 
     print(NN.input)
     print(NN.output)
+
+    print("\nresult is")
+    print(NN.feed_forward())
