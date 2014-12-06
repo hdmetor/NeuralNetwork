@@ -88,11 +88,11 @@ if __name__ == '__main__':
     NN = NeuralNetwork([2,5,3,1])
     NN.init(X,y)
 
-    print(NN.input)
-    print(NN.target)
+    #print(NN.input)
+    #print(NN.target)
 
-    print("\nresult is")
-    print(NN.feed_forward(np.array(X)))
-    print([i.shape for i in NN.biases])
+    #print("\nresult is")
+    #print(NN.feed_forward(np.array(X)))
 
-    #NN.back_propagation()
+
+    NN.back_propagation()
