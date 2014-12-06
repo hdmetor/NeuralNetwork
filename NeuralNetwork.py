@@ -18,7 +18,8 @@ class NeuralNetwork:
         # init weights
         # weight is an array that contains at position i the weight for level i-i to i
         # we added a column to take into account biases
-        self.weights = [np.random.randn(j , i+ 1) for i, j in zip(self.shape[:-1], self.shape[1:])]
+        self.weights = [np.random.randn(j , i) for i, j in zip(self.shape[:-1], self.shape[1:])]
+        self.biases = [np.random.randn( i, 1 ) for i in self.shape[1:]]
         self.output = []
 
     def init(self, input, target):
@@ -37,14 +38,15 @@ class NeuralNetwork:
         if weights == None:
             weights = self.weights
         result = input.T
-        for w in weights:
+
+
+        for index, w  in enumerate(weights):
         # each position in weight represent a level in the network
 
-            # we add a 1 at the end of the input to take bias into account
-            new_input = np.vstack([result, np.ones(result.shape[1])])
 
+            # this is not taking into account the biases
             #this contains all the z^l = sum(w*a^(l-1)+b)
-            level_output = np.dot(w, new_input)
+            level_output = np.dot(w, result) + self.biases[index]
             self.output.append(level_output)
             result = self.activation(level_output)
 
@@ -53,10 +55,23 @@ class NeuralNetwork:
         return result
 
     def back_propagation(self):
+
+        delta = []
+
         # delta for the output level
-
         delta_l = (self.activation(self.output[-1]) - self.target) * self.activation(self.output[-1], der = True)
+        delta.append(delta_l)
 
+        steps = len(self.weights) - 1
+        for l in range(steps, -1, -1):
+            print('step is', l, steps-l)
+            print('shape ',self.weights[l].T.shape)
+            delta_l = np.dot(self.weights[l].T,delta[steps-l])
+            delta.append(delta_l)
+            pass
+
+
+        print(len(self.weights),"delta\n\n",delta)
         pass
 
 
@@ -65,7 +80,12 @@ if __name__ == '__main__':
     X = [[3,5], [5,1], [10,2], [1,2], [3,4],[3,5], [5,1], [10,2], [1,2], [3,4]]
     y = [75, 82, 93, 56, 56,75, 82, 93, 56, 56]
 
-    NN = NeuralNetwork([2,5,10,1])
+
+    #X, y  = [[1,2]], [3]
+
+
+
+    NN = NeuralNetwork([2,5,3,1])
     NN.init(X,y)
 
     print(NN.input)
@@ -73,5 +93,6 @@ if __name__ == '__main__':
 
     print("\nresult is")
     print(NN.feed_forward(np.array(X)))
+    print([i.shape for i in NN.biases])
 
-    NN.back_propagation()
+    #NN.back_propagation()
