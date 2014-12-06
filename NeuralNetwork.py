@@ -6,7 +6,7 @@ def sgm(x, der = False):
         return 1 / (1 + np.exp(-x))
     else:
         simple = 1 / (1 + np.exp(-x))
-        return simple(1 - simple)
+        return simple * (1 - simple)
 
 class NeuralNetwork:
 
@@ -18,37 +18,46 @@ class NeuralNetwork:
         # init weights
         # weight is an array that contains at position i the weight for level i-i to i
         # we added a column to take into account biases
-        self.weight = [np.random.randn(j , i+ 1) for i, j in zip(self.shape[:-1], self.shape[1:])]
+        self.weights = [np.random.randn(j , i+ 1) for i, j in zip(self.shape[:-1], self.shape[1:])]
+        self.output = []
 
-    def init(self, input, output):
+    def init(self, input, target):
         """Pass the training data to the function"""
         # we divide each 'column' for its max
         # should we scale the data in another way? (x-std)/mean
 
-        #insert a sanity check to make sure that the input passed matches the expected dimension
+        #insert a sanity check to make sure that the input (and target) passed matches the expected dimensions
         # make sure that if the input is already a np array it will not wrapped again
         self.input = np.array(input) / np.amax(input, axis = 0)
-        self.output = np.array(output) / np.amax(output)
-        #self.cost = sum((self.feed_forward(input) - output))
+        self.target = np.array(target) / np.amax(target)
+        #self.cost = sum((self.feed_forward(input) - target))
 
-    def feed_forward(self, input):
+    def feed_forward(self, input, weights = None):
         """Pass the input to the network """
-
+        if weights == None:
+            weights = self.weights
         result = input.T
-        for w in self.weight:
+        for w in weights:
         # each position in weight represent a level in the network
 
             # we add a 1 at the end of the input to take bias into account
             new_input = np.vstack([result, np.ones(result.shape[1])])
-            result = self.activation(np.dot(w, new_input))
+
+            #this contains all the z^l = sum(w*a^(l-1)+b)
+            level_output = np.dot(w, new_input)
+            self.output.append(level_output)
+            result = self.activation(level_output)
 
 
-        # this is now the output
+        # this is now the target
         return result
 
     def back_propagation(self):
-        pass
+        # delta for the output level
 
+        delta_l = (self.activation(self.output[-1]) - self.target) * self.activation(self.output[-1], der = True)
+
+        pass
 
 
 if __name__ == '__main__':
@@ -56,11 +65,13 @@ if __name__ == '__main__':
     X = [[3,5], [5,1], [10,2], [1,2], [3,4],[3,5], [5,1], [10,2], [1,2], [3,4]]
     y = [75, 82, 93, 56, 56,75, 82, 93, 56, 56]
 
-    NN = NeuralNetwork([2,5,1])
+    NN = NeuralNetwork([2,5,10,1])
     NN.init(X,y)
 
     print(NN.input)
-    print(NN.output)
+    print(NN.target)
 
     print("\nresult is")
     print(NN.feed_forward(np.array(X)))
+
+    NN.back_propagation()
