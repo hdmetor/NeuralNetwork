@@ -37,6 +37,9 @@ class NeuralNetwork:
         """Pass the input to the network """
         if weights == None:
             weights = self.weights
+
+        # is this correct?
+        self.output.append(input)
         result = input.T
 
 
@@ -55,24 +58,39 @@ class NeuralNetwork:
         return result
 
     def back_propagation(self):
-
-        delta = []
+        # this will contain the delta for the back propagation
+        self.delta = []
 
         # delta for the output level
-        delta_l = (self.activation(self.output[-1]) - self.target) * self.activation(self.output[-1], der = True)
-        delta.append(delta_l)
+        delta = np.multiply( \
+                    self.activation(self.output[-1]) - self.target, \
+                    self.activation(self.output[-1], der = True) \
+                    )
+        self.delta.append(delta)
 
         steps = len(self.weights) - 1
-        for l in range(steps, -1, -1):
-            print('step is', l, steps-l)
-            print('shape ',self.weights[l].T.shape)
-            delta_l = np.dot(self.weights[l].T,delta[steps-l])
-            delta.append(delta_l)
-            pass
+        for l in range(steps, 0, -1):
+            delta = np.multiply(
+                        np.dot(self.weights[l].T,self.delta[steps-l]),
+                        self.activation(self.output[l-1], der = True)
+                        )
+            self.delta.append(delta)
+
+        # delta[i] contains the delta for level i
+        self.delta.reverse()
+        
+
+    def update_weights(self,  eta = 0.3):
+        total = 1
+        return [self.weights[i] - (eta/total) * np.dot(self.delta[i], self.output[i].T) for i in range(len(self.delta))]
 
 
-        print(len(self.weights),"delta\n\n",delta)
-        pass
+    def update_biases(self, eta = 0.3):
+        # this is going to be the number of the training examples
+        total = 1
+        return [self.biases[i] - (eta/total)* self.delta[i] for i in range(len(self.biases))] 
+        
+
 
 
 if __name__ == '__main__':
@@ -81,11 +99,11 @@ if __name__ == '__main__':
     y = [75, 82, 93, 56, 56,75, 82, 93, 56, 56]
 
 
-    #X, y  = [[1,2]], [3]
+    X, y  = [[1,2]], [3]
 
 
 
-    NN = NeuralNetwork([2,5,3,1])
+    NN = NeuralNetwork([2, 3, 1])
     NN.init(X,y)
 
     #print(NN.input)
@@ -94,5 +112,7 @@ if __name__ == '__main__':
     #print("\nresult is")
     #print(NN.feed_forward(np.array(X)))
 
-
+    NN.feed_forward(np.array(X))
     NN.back_propagation()
+    NN.update_biases()
+    NN.update_weights()
