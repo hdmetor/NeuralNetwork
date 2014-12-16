@@ -63,6 +63,8 @@ class NeuralNetwork:
             result = self.activation(level_output)
 
 
+
+
         # this is now the target
         return result
 
@@ -88,16 +90,26 @@ class NeuralNetwork:
         # delta[i] contains the delta for level i
         self.delta.reverse()
 
+        #print("W",[w.shape for w in self.weights])
+        #print("B",[w.shape for w in self.biases])
+        #print("D",[w.shape for w in self.delta])
 
-    def update_weights(self,  eta = 0.3):
+    def gradient_descend(self, eta):
+
+        
+        #update_weights
+        total = len(self.input) 
+        b1 = self.biases
+        self.update_biases(total, eta)
+        
+    def update_weights(self,  eta):
         total = 1
-        return [self.weights[i] - (eta/total) * np.dot(self.delta[i], self.output[i].T) for i in range(len(self.delta))]
+        self.weights =  [self.weights[i] - (eta/total) * np.dot(self.delta[i], self.output[i].T) for i in range(len(self.delta))]
 
 
-    def update_biases(self, eta = 0.3):
-        # this is going to be the number of the training examples
-        total = 1
-        return [self.biases[i] - (eta/total)* self.delta[i] for i in range(len(self.biases))]
+    def update_biases(self, total, eta):
+        """Use backpropagation to update the biases"""
+        self.biases =  [self.biases[i] - (eta/total)* self.delta[i].sum(axis=1)[:,None] for i in range(len(self.biases))]
 
 
     def cost(self):
@@ -115,15 +127,14 @@ if __name__ == '__main__':
     X, y = [[1,2,3,4],[1,2,3,4],[1,2,3,4],[2,3,4,5],[2,3,4,5]], [[10,11],[10,11],[10,11], [22,23], [23,25]]
 
 
-    NN = NeuralNetwork([4, 6,7,10,3, 2])
+    #NN = NeuralNetwork([4, 6,7,10,3, 2])
+    NN = NeuralNetwork([4, 6, 2])
     NN.init(X,y)
 
 
     NN.feed_forward()
-    c1 = NN.cost()
-    print("Cost ", c1)
+
     NN.back_propagation()
-    NN.update_biases()
-    NN.update_weights()
-    NN.feed_forward()
-    print("Cost ", NN.cost())
+    NN.gradient_descend(eta = .3)
+
+ 
