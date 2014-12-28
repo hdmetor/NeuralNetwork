@@ -1,7 +1,7 @@
 import numpy as np
 
 def sgm(x, der = False):
-    #x could be a matrix (and in general will be)
+    """logistic sigmoid function"""
     if not der:
         return 1 / (1 + np.exp(-x))
     else:
@@ -53,32 +53,28 @@ class NeuralNetwork:
 
 
         for index, w  in enumerate(weights):
-        # each position in weight represent a level in the network
+        # each position in weight list represent a level in the network
 
-
-            # this is not taking into account the biases
-            #this contains all the z^l = sum(w*a^(l-1)+b)
+            # caluclates the output of the nodes
             level_output = np.dot(w, result) + self.biases[index]
             self.output.append(level_output)
             result = self.activation(level_output)
 
-
-
-
-        # this is now the target
+        # the last level is the output
         return result
 
     def back_propagation(self):
-        # this will contain the delta for the back propagation
+        # delta for the back propagation
         self.delta = []
 
-        # delta for the output level
+        # calucalte delta for the output level
         delta = np.multiply( \
                     self.activation(self.output[-1]) - self.target, \
                     self.activation(self.output[-1], der = True) \
                     )
         self.delta.append(delta)
 
+        # since it's back propagation we start from the end
         steps = len(self.weights) - 1
         for l in range(steps, 0, -1):
             delta = np.multiply(
@@ -87,23 +83,26 @@ class NeuralNetwork:
                         )
             self.delta.append(delta)
 
-        # delta[i] contains the delta for level i
+        # delta[i] contains the delta for layer i+1
         self.delta.reverse()
 
         #print("W",[w.shape for w in self.weights])
         #print("B",[w.shape for w in self.biases])
         #print("D",[w.shape for w in self.delta])
+        #print("O",[w.shape for w in self.output])
 
     def gradient_descend(self, eta):
 
         
-        #update_weights
         total = len(self.input) 
-        b1 = self.biases
+
+        self.update_weights(total, eta)
         self.update_biases(total, eta)
         
-    def update_weights(self,  eta):
-        total = 1
+        
+        
+    def update_weights(self, total, eta):
+        """Use backpropagation to update weights"""
         self.weights =  [self.weights[i] - (eta/total) * np.dot(self.delta[i], self.output[i].T) for i in range(len(self.delta))]
 
 
@@ -133,8 +132,12 @@ if __name__ == '__main__':
 
 
     NN.feed_forward()
-
     NN.back_propagation()
     NN.gradient_descend(eta = .3)
+
+    c1 = NN.cost()
+    NN.feed_forward()
+    c2 = NN.cost()
+    print('is cost decreasing? ',c2 < c1)
 
  
