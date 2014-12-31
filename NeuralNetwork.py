@@ -22,22 +22,6 @@ class NeuralNetwork:
         self.biases = [np.random.randn( i, 1 ) for i in self.shape[1:]]
         self.output = []
 
-    def init(self, input, target):
-        """Pass the training data to the function"""
-        # we divide each 'column' for its max
-        # should we scale the data in another way? (x-std)/mean
-
-        # make sure that if the input is already a np array it will not wrapped again
-        self.input = (np.array(input) / np.amax(input, axis = 0)).T
-        self.target = (np.array(target) / np.amax(target)).T
-
-        if self.input.shape[0] != self.shape[0]:
-            print('Input and shape of the network not compatible')
-            exit()
-
-        if self.target.shape[0] != self.shape[-1]:
-            print('Output and shape of the network not compatible')
-            exit()
 
     def feed_forward(self, input = None, weights = None):
         """Pass the input to the network """
@@ -49,8 +33,6 @@ class NeuralNetwork:
 
         result = input
         self.output.append(result)
-
-
 
         for index, w  in enumerate(weights):
         # each position in weight list represent a level in the network
@@ -115,6 +97,45 @@ class NeuralNetwork:
         """Calculate the cost function using the current weights and output"""
         return np.linalg.norm(self.activation(self.output[-1]) - self.target) ** 2
 
+    def SGD(input, batch_size, epochs = 20, eta = .3):
+
+
+        # sanity / shape checks that input / output respect the desired dimensions
+        if self.input.shape[0] != self.shape[0]:
+            print('Input and shape of the network not compatible')
+            exit()
+
+        if self.target.shape[0] != self.shape[-1]:
+            print('Output and shape of the network not compatible')
+            exit()
+
+        # normalize inputs?
+        #self.input = (np.array(input) / np.amax(input, axis = 0)).T
+        #self.target = (np.array(target) / np.amax(target)).T
+
+        total = len(input)
+
+        diff = total % batch_size
+        if diff != 0:
+            input = input[: total - diff]
+            total = len(input)
+
+        
+        for epoch in range(epochs):
+            # each time shuffle the data
+            np.array.shuffle(input)
+            # create a list of batches
+            batches = [input[k:k+batch_size] for k in range(0,total,batch_size)]
+            for batch in batches:
+                # pass the input trought the newtork
+                self.feed_forward(batch)
+                # calcualte delta for all levels
+                calcualte_deltas(weights, output)
+                # updating weights and biases
+                self.update_weights(batch_size, eta)
+                self.update_biases(batch_size, eta)
+
+
 if __name__ == '__main__':
 
     X = [[3,5], [5,1], [10,2], [1,2], [3,4],[3,5], [5,1], [10,2], [1,2], [3,4]]
@@ -140,4 +161,9 @@ if __name__ == '__main__':
     c2 = NN.cost()
     print('is cost decreasing? ',c2 < c1)
 
- 
+"""
+TODOS:
+
+- insert a save and load method
+
+"""
