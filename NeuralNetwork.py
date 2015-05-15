@@ -37,7 +37,7 @@ class NeuralNetwork:
         if weights == None:
             weights = self.weights
         #TODO = remove result, and make this a void function?
-        result = input.T
+        result = input
         self.output.append(result)
         #print("input" , input)
         #print("weight", weights)
@@ -46,11 +46,11 @@ class NeuralNetwork:
         # each position in weight list represent a level in the network
 
             # calculates the output of the nodes
-            print("\t inside feed forwkd, level ", index)
-            print("w shape: ", w.shape)
-            print("biases shape: ", self.biases[index].shape)
-            print("resutl shape:", result.shape)
-            
+            # print("\t inside feed forward, level ", index)
+            # print("w shape: ", w.shape)
+            # print("biases shape: ", self.biases[index].shape)
+            # print("result shape:", result.shape)
+
             level_output = np.dot(w, result) + self.biases[index]
             self.output.append(level_output)
             result = self.activation(level_output)
@@ -97,18 +97,18 @@ class NeuralNetwork:
         
     def update_weights(self, total, eta):
         """Use backpropagation to update weights"""
-        for (i, d) in enumerate(self.delta):
-            print("IN UW it ", i)
-            print("weights shape: ", self.weights[i].shape)
-            print("delta shape: ",d.shape)
-            print("output shape.t: ",self.output[i].T.shape)
+        # for (i, d) in enumerate(self.delta):
+        #     print("IN UW it ", i)
+        #     print("weights shape: ", self.weights[i].shape)
+        #     print("delta shape: ",d.shape)
+        #     print("output shape.t: ",self.output[i].T.shape)
 
-            self.weights[i] -= (eta / total) * np.dot(d, self.output[i].T)
-        #self.weights =  [self.weights[i] - (eta/total) * np.dot(self.delta[i], self.output[i].T) for i in range(len(self.delta))]
+        #     self.weights[i] -= (eta / total) * np.dot(d, self.output[i].T)
+        self.weights =  [self.weights[i] - (eta/total) * np.dot(self.delta[i], self.output[i].T) for i, e in enumerate(self.delta)]
 
     def update_biases(self, total, eta):
         """Use backpropagation to update the biases"""
-        self.biases =  [self.biases[i] - (eta/total)* self.delta[i].sum(axis=1)[:,None] for i in range(len(self.biases))]
+        self.biases =  [self.biases[i] - (eta/total)* self.delta[i].sum(axis=1)[:, None] for i, e  in enumerate(self.biases)]
 
     def cost(self):
         """Calculate the cost function using the current weights and output"""
@@ -149,7 +149,7 @@ class NeuralNetwork:
             # this is only for debug mode
             epochs = total
         for epoch in range(epochs):
-            print("Beginning of epoch:", epoch)
+            print("*****Beginning of epoch:", epoch)
             # TODO = each time shuffle the data
             #p = np.random.permutation(len(input))
             #self.input = self.input[p]
@@ -157,22 +157,21 @@ class NeuralNetwork:
             # create a list of batches (input and target)
             batchesInput = [self.input[:, k:k + batch_size] for k in range(0, total, batch_size)]
             batchesTarget = [self.target[:, k:k + batch_size] for k in range(0, total, batch_size)]
-            print(self.input)
             for batchInput, batchTarget in zip(batchesInput, batchesTarget):
                 #TODO = possibly init here self.output and the beginning of each iteration 
                 # and pass it around as a varible
-                print('batch input:')
-                pp.pprint(batchInput)
-                print('batch target:')
-                pp.pprint(batchTarget)
+                # print('batch input:')
+                # pp.pprint(batchInput)
+                # print('batch target:')
+                # pp.pprint(batchTarget)
                 # pass the input trought the newtork
-                print("feeding forward")
+                # print("feeding forward")
                 self.feed_forward(batchInput)
                 # calcualte delta for all levels
-                print("calculating deltas")
+                # print("calculating deltas")
                 self.calculate_deltas(batchInput, batchTarget)
                 # updating weights and biases
-                print("updating weights")
+                # print("updating weights")
                 self.update_weights(batch_size, eta)
                 self.update_biases(batch_size, eta)
 
@@ -200,10 +199,8 @@ if __name__ == '__main__':
 """
     print("starting sgd")
     NN.SGD(X,y,2)
-    #c1 = NN.cost()
-    #NN.feed_forward()
-    #c2 = NN.cost()
-    #print('is cost decreasing? ',c2 < c1)
+
+
 
 """
 TODOS:
