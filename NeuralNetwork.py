@@ -40,16 +40,20 @@ class NeuralNetwork:
         if input == None:
             input = self.input
 
-        result = input
+        result = input.T
         self.output.append(result)
+        print("input" , input)
+        print("weight", weights)
 
         for index, w  in enumerate(weights):
         # each position in weight list represent a level in the network
 
             # calculates the output of the nodes
+            print("\t inside FF")
             print(index)
             print(w.shape)
             print(result.shape)
+            print("biases ", self.biases[index])
             level_output = np.dot(w, result) + self.biases[index]
             self.output.append(level_output)
             result = self.activation(level_output)
@@ -57,7 +61,7 @@ class NeuralNetwork:
         # the last level is the output
         return result
 
-    def back_propagation(self):
+    def calculate_deltas(self, weights, output):
         # delta for the back propagation
         self.delta = []
 
@@ -92,7 +96,14 @@ class NeuralNetwork:
         
     def update_weights(self, total, eta):
         """Use backpropagation to update weights"""
-        self.weights =  [self.weights[i] - (eta/total) * np.dot(self.delta[i], self.output[i].T) for i in range(len(self.delta))]
+        for (i, d) in enumerate(self.delta):
+            print("IN UW it ", i)
+            print("weights shape: ", self.weights[i].shape)
+            print("delta shape: ",d.shape)
+            print("output shape.t: ",self.output[i].T.shape)
+
+            self.weights[i] -= (eta / total) * np.dot(d, self.output[i].T)
+        #self.weights =  [self.weights[i] - (eta/total) * np.dot(self.delta[i], self.output[i].T) for i in range(len(self.delta))]
 
     def update_biases(self, total, eta):
         """Use backpropagation to update the biases"""
@@ -138,19 +149,23 @@ class NeuralNetwork:
             print("N", total)
             epochs = total
         for epoch in range(epochs):
-            print("A",range(epochs))
+            print("A", epoch)
             # each time shuffle the data
             np.random.shuffle(input)
+            print(np.random.shuffle(input))
             # create a list of batches
             batches = [input[k:k+batch_size] for k in range(0,total,batch_size)]
             for batch in batches:
                 print('bath')
                 pp.pprint(batch)
                 # pass the input trought the newtork
+                print("FF")
                 self.feed_forward(batch)
                 # calcualte delta for all levels
-                calcualte_deltas(weights, output)
+                print("delta")
+                self.calculate_deltas(self.weights, self.output)
                 # updating weights and biases
+                print("Update")
                 self.update_weights(batch_size, eta)
                 self.update_biases(batch_size, eta)
 
@@ -176,7 +191,7 @@ if __name__ == '__main__':
     NN.back_propagation()
     NN.gradient_descend(eta = .3)
 """
-
+    print("starting sgd")
     NN.SGD(X,y,1)
     #c1 = NN.cost()
     #NN.feed_forward()
