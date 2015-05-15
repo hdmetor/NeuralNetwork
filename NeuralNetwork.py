@@ -31,29 +31,26 @@ class NeuralNetwork:
         self.init_biases(self.shape)
         self.init_output()
 
-
-    def feed_forward(self, input = None, weights = None):
-        """Pass the input to the network """
+    # TODO = remove weights
+    def feed_forward(self, input, weights = None):
+        """Takes the input and calcualtes the predicted value """
         if weights == None:
             weights = self.weights
-
-        if input == None:
-            input = self.input
-
+        #TODO = remove result, and make this a void function?
         result = input.T
         self.output.append(result)
-        print("input" , input)
-        print("weight", weights)
+        #print("input" , input)
+        #print("weight", weights)
 
         for index, w  in enumerate(weights):
         # each position in weight list represent a level in the network
 
             # calculates the output of the nodes
-            print("\t inside FF")
-            print(index)
-            print(w.shape)
-            print(result.shape)
-            print("biases ", self.biases[index])
+            print("\t inside feed forwkd, level ", index)
+            print("w shape: ", w.shape)
+            print("biases shape: ", self.biases[index].shape)
+            print("resutl shape:", result.shape)
+            
             level_output = np.dot(w, result) + self.biases[index]
             self.output.append(level_output)
             result = self.activation(level_output)
@@ -61,13 +58,17 @@ class NeuralNetwork:
         # the last level is the output
         return result
 
-    def calculate_deltas(self, weights, output):
+    def calculate_deltas(self, input, target):
+        """ Given the input and the output (typically from a batch),
+        it calculates the corresponding deltas,
+        """
+        # TODO = should delta be a variable in the batch cycle?
         # delta for the back propagation
         self.delta = []
 
-        # calucalte delta for the output level
+        # calcualte delta for the output level
         delta = np.multiply( \
-                    self.activation(self.output[-1]) - self.target, \
+                    self.activation(self.output[-1]) - target, \
                     self.activation(self.output[-1], der = True) \
                     )
         self.delta.append(delta)
@@ -76,7 +77,7 @@ class NeuralNetwork:
         steps = len(self.weights) - 1
         for l in range(steps, 0, -1):
             delta = np.multiply(
-                        np.dot(self.weights[l].T,self.delta[steps-l]),
+                        np.dot(self.weights[l].T, self.delta[steps-l]),
                         self.activation(self.output[l], der = True)
                         )
             self.delta.append(delta)
@@ -113,7 +114,7 @@ class NeuralNetwork:
         """Calculate the cost function using the current weights and output"""
         return np.linalg.norm(self.activation(self.output[-1]) - self.target) ** 2
 
-    def SGD(self,input, target, batch_size, epochs = 20, eta = .3):
+    def SGD(self, input, target, batch_size, epochs = 20, eta = .3):
 
         # maybe remove this in the future?
         if isinstance(input, list):
@@ -136,36 +137,42 @@ class NeuralNetwork:
         #self.input = (np.array(input) / np.amax(input, axis = 0)).T
         #self.target = (np.array(target) / np.amax(target)).T
 
-        total = len(input)
+        total = len(self.input)
         diff = total % batch_size
-        print(total, diff)
         # we discard the last examples for now
         if diff != 0:
-            input = input[: total - diff]
-            total = len(input)
+            self.input = self.input[: total - diff]
+            self.target = self.target[: total - diff]
+            total = len(self.input)
 
         if epochs > total:
             # this is only for debug mode
-            print("N", total)
             epochs = total
         for epoch in range(epochs):
-            print("A", epoch)
-            # each time shuffle the data
-            np.random.shuffle(input)
-            print(np.random.shuffle(input))
-            # create a list of batches
-            batches = [input[k:k+batch_size] for k in range(0,total,batch_size)]
-            for batch in batches:
-                print('bath')
-                pp.pprint(batch)
+            print("Beginning of epoch:", epoch)
+            # TODO = each time shuffle the data
+            #p = np.random.permutation(len(input))
+            #self.input = self.input[p]
+            #self.target = self.target[p]
+            # create a list of batches (input and target)
+            batchesInput = [self.input[:, k:k + batch_size] for k in range(0, total, batch_size)]
+            batchesTarget = [self.target[:, k:k + batch_size] for k in range(0, total, batch_size)]
+            print(self.input)
+            for batchInput, batchTarget in zip(batchesInput, batchesTarget):
+                #TODO = possibly init here self.output and the beginning of each iteration 
+                # and pass it around as a varible
+                print('batch input:')
+                pp.pprint(batchInput)
+                print('batch target:')
+                pp.pprint(batchTarget)
                 # pass the input trought the newtork
-                print("FF")
-                self.feed_forward(batch)
+                print("feeding forward")
+                self.feed_forward(batchInput)
                 # calcualte delta for all levels
-                print("delta")
-                self.calculate_deltas(self.weights, self.output)
+                print("calculating deltas")
+                self.calculate_deltas(batchInput, batchTarget)
                 # updating weights and biases
-                print("Update")
+                print("updating weights")
                 self.update_weights(batch_size, eta)
                 self.update_biases(batch_size, eta)
 
@@ -178,7 +185,7 @@ if __name__ == '__main__':
 
     X, y  = [[1,2]], [3]
 
-    X, y = [[1,2,3,4],[11,22,33,44],[21,22,32,24],[2,3,4,5],[2,3,4,5]], [[10,11],[10,11],[10,11], [22,23], [23,25]]
+    X, y = [[1,2,3,4],[11,22,33,44],[21,22,32,24],[2,3,4,5],[52,53,54,55]], [[10,11],[210,211],[310,311], [422,423], [523,525]]
 
 
     #NN = NeuralNetwork([4, 6,7,10,3, 2])
@@ -192,7 +199,7 @@ if __name__ == '__main__':
     NN.gradient_descend(eta = .3)
 """
     print("starting sgd")
-    NN.SGD(X,y,1)
+    NN.SGD(X,y,2)
     #c1 = NN.cost()
     #NN.feed_forward()
     #c2 = NN.cost()
