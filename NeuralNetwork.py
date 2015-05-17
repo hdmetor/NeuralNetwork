@@ -1,5 +1,6 @@
 import numpy as np
 import pprint as pp
+import math
 
 def sgm(x, der = False):
     """logistic sigmoid function"""
@@ -186,9 +187,18 @@ if __name__ == '__main__':
 
     X, y = [[1,2,3,4],[11,22,33,44],[21,22,32,24],[2,3,4,5],[52,53,54,55]], [[10,11],[210,211],[310,311], [422,423], [523,525]]
 
+    X = []
+    y = []
+
+    for i in range(10):
+        d = (2 * math.pi)/10
+        X.append([i*d])
+        y.append([math.sin(i*d)])
+
+    print(X,y)
 
     #NN = NeuralNetwork([4, 6,7,10,3, 2])
-    NN = NeuralNetwork([4, 6, 2])
+    NN = NeuralNetwork([1, 4, 6, 2, 1])
     """
     NN.init(X,y)
 
