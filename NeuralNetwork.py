@@ -111,9 +111,9 @@ class NeuralNetwork:
         """Use backpropagation to update the biases"""
         self.biases =  [self.biases[i] - (eta/total)* self.delta[i].sum(axis=1)[:, None] for i, e  in enumerate(self.biases)]
 
-    def cost(self):
-        """Calculate the cost function using the current weights and output"""
-        return np.linalg.norm(self.activation(self.output[-1]) - self.target) ** 2
+    def cost(self, predicted, target):
+        """Calculate the cost function using the current weights and biases"""
+        return np.linalg.norm(predicted - target) ** 2
 
     def SGD(self, input, target, batch_size, epochs = 20, eta = .3):
 
@@ -176,39 +176,44 @@ class NeuralNetwork:
                 self.update_weights(batch_size, eta)
                 self.update_biases(batch_size, eta)
 
+    def test(self, input, output):
+        result = np.array(input).T
+        output = np.array(output).T
+        for i, w in enumerate(self.weights):
+            result = np.dot(w, result) + self.biases[i]
+        
+        print("cost was ", self.cost(result, output))
+
 
 if __name__ == '__main__':
 
-    X = [[3,5], [5,1], [10,2], [1,2], [3,4],[3,5], [5,1], [10,2], [1,2], [3,4]]
-    y = [75, 82, 93, 56, 56,75, 82, 93, 56, 56]
-
-
-    X, y  = [[1,2]], [3]
-
-    X, y = [[1,2,3,4],[11,22,33,44],[21,22,32,24],[2,3,4,5],[52,53,54,55]], [[10,11],[210,211],[310,311], [422,423], [523,525]]
-
     X = []
     y = []
+    X_test = []
+    y_test = []
 
+    # sin
     for i in range(10):
         d = (2 * math.pi)/10
         X.append([i*d])
         y.append([math.sin(i*d)])
 
-    print(X,y)
+    # x^2
+    m = 10000
+    for i in range(m):
+        X.append([i/m])
+        y.append([(i/m) ** 2])
+        X_test.append([(i+1)/m])
+        y_test.append([((i+1)/m) ** 2])
+
+
 
     #NN = NeuralNetwork([4, 6,7,10,3, 2])
-    NN = NeuralNetwork([1, 4, 6, 2, 1])
-    """
-    NN.init(X,y)
+    NN = NeuralNetwork([1, 4, 1])
 
-
-    NN.feed_forward()
-    NN.back_propagation()
-    NN.gradient_descend(eta = .3)
-"""
     print("starting sgd")
     NN.SGD(X,y,2)
+    NN.test(X_test, y_test)
 
 
 
