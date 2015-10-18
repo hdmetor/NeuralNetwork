@@ -2,7 +2,7 @@ import numpy as np
 import pprint as pp
 import math
 
-def sgm(x, der = False):
+def sgm(x, der=False):
     """logistic sigmoid function"""
     if not der:
         return 1 / (1 + np.exp(-x))
@@ -12,38 +12,41 @@ def sgm(x, der = False):
 
 class NeuralNetwork:
 
-    def init_weights(self, shape):
+    def _init_weights(self, shape):
         self.weights = [np.random.randn(j , i) for i, j in zip(shape[:-1], shape[1:])]
 
-    def init_biases(self, shape):
+    def _init_biases(self, shape):
         self.biases = [np.random.randn( i, 1 ) for i in self.shape[1:]]
         
-    def init_output(self):
+    def _init_output(self):
         self.output = []
 
-    def __init__(self, shape, activation = sgm):
+    def __init__(self, shape, activation=sgm):
         """Create  a new Neural Network with a given shape
-        shape = [input, hidden1, ..., hiddenk, output]"""
+        shape = [input, hidden_1, ..., hidden_k, output]
+        using the function activation"""
         self.shape = shape
         self.activation = activation
         # init weights
         # weight is an array that contains at position i the weight for level i-i to i
-        self.init_weights(self.shape)
-        self.init_biases(self.shape)
-        self.init_output()
+        self._init_weights(self.shape)
+        self._init_biases(self.shape)
+        self._init_output()
+        print (" weight init ")
+        for w in self.weights:
+            print(w.shape)
 
     # TODO = remove weights
-    def feed_forward(self, input, weights = None):
-        """Takes the input and calcualtes the predicted value """
-        if weights == None:
-            weights = self.weights
-        #TODO = remove result, and make this a void function?
+    def feed_forward(self, input):
+        """Given the input and, return the predicted value according to the current weights."""
+
         result = input
         self.output.append(result)
         #print("input" , input)
         #print("weight", weights)
 
-        for index, w  in enumerate(weights):
+        # TODO = use zip
+        for w, b  in zip(self.weights, self.biases):
         # each position in weight list represent a level in the network
 
             # calculates the output of the nodes
@@ -52,16 +55,16 @@ class NeuralNetwork:
             # print("biases shape: ", self.biases[index].shape)
             # print("result shape:", result.shape)
 
-            level_output = np.dot(w, result) + self.biases[index]
-            self.output.append(level_output)
-            result = self.activation(level_output)
+            result = self.activation(np.dot(w, result) + b)
+            self.output.append(result)
+            # result = self.activation(level_output)
 
         # the last level is the output
         return result
 
     def calculate_deltas(self, input, target):
         """ Given the input and the output (typically from a batch),
-        it calculates the corresponding deltas,
+        it calculates the corresponding deltas.
         """
         # TODO = should delta be a variable in the batch cycle?
         # delta for the back propagation
@@ -70,7 +73,7 @@ class NeuralNetwork:
         # calcualte delta for the output level
         delta = np.multiply( \
                     self.activation(self.output[-1]) - target, \
-                    self.activation(self.output[-1], der = True) \
+                    self.activation(self.output[-1], der=True) \
                     )
         self.delta.append(delta)
 
@@ -78,8 +81,11 @@ class NeuralNetwork:
         steps = len(self.weights) - 1
         for l in range(steps, 0, -1):
             delta = np.multiply(
-                        np.dot(self.weights[l].T, self.delta[steps-l]),
-                        self.activation(self.output[l], der = True)
+                        np.dot(
+                            self.weights[l].T, 
+                            self.delta[steps-l]
+                            ),
+                        self.activation(self.output[l], der=True)
                         )
             self.delta.append(delta)
 
@@ -91,11 +97,7 @@ class NeuralNetwork:
         #print("D",[w.shape for w in self.delta])
         #print("O",[w.shape for w in self.output])
 
-    def gradient_descend(self, eta):
-        total = len(self.input) 
-        self.update_weights(total, eta)
-        self.update_biases(total, eta)
-        
+
     def update_weights(self, total, eta):
         """Use backpropagation to update weights"""
         # for (i, d) in enumerate(self.delta):
@@ -115,8 +117,7 @@ class NeuralNetwork:
         """Calculate the cost function using the current weights and biases"""
         return np.linalg.norm(predicted - target) ** 2
 
-    def SGD(self, input, target, batch_size, epochs = 20, eta = .3):
-
+    def SGD(self, input, target, batch_size, epochs = 20, eta = .3, print_cost=False):
         # maybe remove this in the future?
         if isinstance(input, list):
             input = np.array(input)
@@ -137,19 +138,22 @@ class NeuralNetwork:
         # normalize inputs?
         #self.input = (np.array(input) / np.amax(input, axis = 0)).T
         #self.target = (np.array(target) / np.amax(target)).T
-
-        total = len(self.input)
+        
+        # number of total examples
+        total = self.input.shape[1]
         diff = total % batch_size
         # we discard the last examples for now
         if diff != 0:
             self.input = self.input[: total - diff]
             self.target = self.target[: total - diff]
-            total = len(self.input)
-
+            total = self.input.shape[1]
+        print("epochs ", epochs, total, )
         if epochs > total:
             # this is only for debug mode
             epochs = total
+        print("epochs ", epochs)
         for epoch in range(epochs):
+            # for each epoch, we reshuffle the data and train the network
             print("*****Beginning of epoch:", epoch)
             # TODO = each time shuffle the data
             #p = np.random.permutation(len(input))
@@ -159,8 +163,9 @@ class NeuralNetwork:
             batchesInput = [self.input[:, k:k + batch_size] for k in range(0, total, batch_size)]
             batchesTarget = [self.target[:, k:k + batch_size] for k in range(0, total, batch_size)]
             for batchInput, batchTarget in zip(batchesInput, batchesTarget):
-                #TODO = possibly init here self.output and the beginning of each iteration 
-                # and pass it around as a varible
+                
+                self._init_output()
+                
                 # print('batch input:')
                 # pp.pprint(batchInput)
                 # print('batch target:')
@@ -175,14 +180,18 @@ class NeuralNetwork:
                 # print("updating weights")
                 self.update_weights(batch_size, eta)
                 self.update_biases(batch_size, eta)
+                if (print_cost):
+                    print("Error is ", self.cost(1, 2))
 
-    def test(self, input, output):
-        result = np.array(input).T
-        output = np.array(output).T
-        for i, w in enumerate(self.weights):
-            result = np.dot(w, result) + self.biases[i]
+
+    def predict(self, data):
+        result = np.array(data).T
+        #output = np.array(output).T
+        for w, b in zip(self.weights, self.biases):
         
-        print("cost was ", self.cost(result, output))
+            result = np.dot(w, result) + b
+        return result.T
+        #print("cost was ", self.cost(result, output))
 
 
 if __name__ == '__main__':
@@ -191,29 +200,36 @@ if __name__ == '__main__':
     y = []
     X_test = []
     y_test = []
+    m = 10000
 
     # sin
-    for i in range(10):
-        d = (2 * math.pi)/10
-        X.append([i*d])
-        y.append([math.sin(i*d)])
+    # for i in range(10):
+    #     d = (2 * math.pi)/10
+    #     X.append([i*d])
+    #     y.append([math.sin(i*d)])
 
     # x^2
-    m = 10000
-    for i in range(m):
-        X.append([i/m])
-        y.append([(i/m) ** 2])
-        X_test.append([(i+1)/m])
-        y_test.append([((i+1)/m) ** 2])
+    
+    # for i in range(m):
+    #     X.append([i/m])
+    #     y.append([(i/m) ** 2])
+    #     X_test.append([(i+1)/m])
+    #     y_test.append([((i+1)/m) ** 2])
 
+    for xx in np.linspace(-1, 1, 1000):
+        for yy in np.linspace(-1, 1, 1000):
+            
+            X.append([xx, yy])
+            y.append([np.sin(xx - yy) + np.cos(xx + yy)])
 
 
     #NN = NeuralNetwork([4, 6,7,10,3, 2])
-    NN = NeuralNetwork([1, 4, 1])
+    NN = NeuralNetwork([2, 4, 1])
 
     print("starting sgd")
-    NN.SGD(X,y,2)
-    NN.test(X_test, y_test)
+    NN.SGD(X,y,100, epochs=4)
+    #NN.test(X_test, y_test)
+    print(NN.predict([[0,0]]))
 
 
 
