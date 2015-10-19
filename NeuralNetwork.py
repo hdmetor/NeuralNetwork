@@ -16,7 +16,7 @@ class NeuralNetwork:
 
     Args:
         shape (list): shape of the network. First element is the input layer, last element
-        is the ouput layer.
+        is the output layer.
         activation (optional): pass the activation function. Defaults to sigmoid. 
         """
 
@@ -24,7 +24,7 @@ class NeuralNetwork:
         self.weights = [np.random.randn(j , i) for i, j in zip(shape[:-1], shape[1:])]
 
     def _init_biases(self, shape):
-        self.biases = [np.random.randn( i, 1 ) for i in self.shape[1:]]
+        self.biases = [np.random.randn(i, 1) for i in self.shape[1:]]
         
     def _init_output(self):
         self.output = []
@@ -56,7 +56,7 @@ class NeuralNetwork:
         # delta for the back propagation
         self.delta = []
 
-        # calcualte delta for the output level
+        # calculate delta for the output level
         delta = np.multiply( \
                     self.activation(self.output[-1]) - target, \
                     self.activation(self.output[-1], der=True) \
@@ -136,11 +136,11 @@ class NeuralNetwork:
                 # reset the status of the internal variables each time
                 self._init_output()
                 
-                # calulating the values corresponding to the inputs
+                # output values corresponding to the inputs
                 self.feed_forward(batch_input)
                 
                 # do backpropagation
-                # calcualte delta for all levels
+                # calculate delta for all levels
                 self.calculate_deltas(batch_input, batch_target)
                 # update internal variables
                 self.update_weights(batch_size, eta)
@@ -192,6 +192,7 @@ if __name__ == '__main__':
     #NN = NeuralNetwork([4, 6,7,10,3, 2])
     NN = NeuralNetwork([1, 2, 1])
 
+
     print("starting sgd")
-    NN.SGD(X,y,100, epochs=4, print_cost=True)
+    NN.SGD(X,y,100, epochs=1, print_cost=True)
     print(NN.predict([[0], [1], [-11]]))
