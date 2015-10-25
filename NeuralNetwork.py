@@ -1,6 +1,7 @@
 import numpy as np
 import pprint as pp
 import math
+from sklearn.utils import shuffle
 
 def sgm(x, der=False):
     """Logistic sigmoid function.
@@ -36,11 +37,10 @@ class NeuralNetwork:
         self._init_biases(self.shape)
         self._init_output()
 
-    def feed_forward(self, input):
+    def feed_forward(self, data):
         """Given the input and, return the predicted value according to the current weights."""
-
-        result = input
-        self.output.append(result)
+        result = data
+        self.output.append(data)
 
         for w, b  in zip(self.weights, self.biases):
             result = self.activation(np.dot(w, result) + b)
@@ -124,11 +124,8 @@ class NeuralNetwork:
         for epoch in range(epochs):
             # for each epoch, we reshuffle the data and train the network
             print("***** Epoch:", epoch)
-            # TODO = each time shuffle the data
-            #p = np.random.permutation(len(input))
-            #self.input = self.input[p]
-            #self.target = self.target[p]
             # create a list of batches (input and target)
+            self.input, self.target = shuffle(self.input, self.target)
             batches_input = [self.input[:, k:k + batch_size] for k in range(0, total, batch_size)]
             batches_target = [self.target[:, k:k + batch_size] for k in range(0, total, batch_size)]
             for batch_input, batch_target in zip(batches_input, batches_target):
@@ -194,5 +191,5 @@ if __name__ == '__main__':
 
 
     print("starting sgd")
-    NN.SGD(X,y,100, epochs=1, print_cost=True)
+    NN.SGD(X,y,100, epochs=10, print_cost=True)
     print(NN.predict([[0], [1], [-11]]))
