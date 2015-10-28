@@ -99,7 +99,7 @@ class NeuralNetwork:
         """Calculate the cost function using the current weights and biases"""
         return np.linalg.norm(predicted - target) ** 2
 
-    def SGD(self, input, target, batch_size, epochs = 20, eta = .3, print_cost=False):
+    def SGD(self, input, target, batch_size, epochs=20, eta=.3, print_cost=False):
         # maybe remove this in the future?
         if isinstance(input, list):
             input = np.array(input)
@@ -140,7 +140,8 @@ class NeuralNetwork:
             for batch_input, batch_target in zip(batches_input, batches_target):
                 
                 # reset the status of the internal variables each time
-                self._init_output()
+                self._init_outputs()
+                self._init_activations()
                 
                 # output values corresponding to the inputs
                 self.feed_forward(batch_input)
