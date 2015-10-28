@@ -35,6 +35,9 @@ class NeuralNetwork:
     def _init_outputs(self):
         self.outputs = []
 
+    def _init_deltas(self):
+        self.deltas = []
+
     def __init__(self, shape, activation=sgm):
         self.shape = shape
         self.activation = activation
@@ -58,19 +61,20 @@ class NeuralNetwork:
         # the last level is the activated output
         return result
 
-    def calculate_deltas(self, input, target):
+    def calculate_deltas(self, data, target):
         """ Given the input and the output (typically from a batch),
         it calculates the corresponding deltas.
         """
         # delta for the back propagation
-        self.delta = []
+        self._init_deltas()
+        self.feed_forward(data)
 
         # calculate delta for the output level
         delta = np.multiply( \
                     self.activations[-1] - target, \
                     self.activation(self.outputs[-1], der=True) \
                     )
-        self.delta.append(delta)
+        self.deltas.append(delta)
 
         # since it's back propagation we start from the end
         steps = len(self.weights) - 1
@@ -78,39 +82,39 @@ class NeuralNetwork:
             delta = np.multiply(
                         np.dot(
                             self.weights[l].T, 
-                            self.delta[steps-l]
+                            self.deltas[steps-l]
                             ),
                         self.activation(self.outputs[l], der=True)
                         )
-            self.delta.append(delta)
+            self.deltas.append(delta)
 
         # delta[i] contains the delta for layer i+1
-        self.delta.reverse()
+        self.deltas.reverse()
 
     def update_weights(self, total, eta):
         """Use backpropagation to update weights"""
-        self.weights =  [self.weights[i] - (eta/total) * np.dot(self.delta[i], self.activations[i].T) for i, e in enumerate(self.delta)]
+        self.weights =  [self.weights[i] - (eta/total) * np.dot(self.deltas[i], self.activations[i].T) for i, e in enumerate(self.deltas)]
 
     def update_biases(self, total, eta):
         """Use backpropagation to update the biases"""
-        self.biases =  [self.biases[i] - (eta/total)* self.delta[i].sum(axis=1)[:, None] for i, e  in enumerate(self.biases)]
+        self.biases = [self.biases[i] - (eta/total)* self.deltas[i].sum(axis=1)[:, None] for i, e  in enumerate(self.biases)]
 
     def cost(self, predicted, target):
         """Calculate the cost function using the current weights and biases"""
         return np.linalg.norm(predicted - target) ** 2
 
-    def SGD(self, input, target, batch_size, epochs=20, eta=.3, print_cost=False):
+    def SGD(self, data, target, batch_size, epochs=20, eta=.3, print_cost=False):
         # maybe remove this in the future?
-        if isinstance(input, list):
-            input = np.array(input)
+        if isinstance(data, list):
+            data = np.array(data)
         if isinstance(target, list):
             target = np.array(target)
 
-        self.input = input.T
+        self.data = data.T
         self.target = target.T
 
         # sanity / shape checks that input / output respect the desired dimensions
-        if self.input.shape[0] != self.shape[0]:
+        if self.data.shape[0] != self.shape[0]:
             print('Input and shape of the network not compatible')
             exit()
         if self.target.shape[0] != self.shape[-1]:
@@ -122,23 +126,22 @@ class NeuralNetwork:
         #self.target = (np.array(target) / np.amax(target)).T
         
         # number of total examples
-        total = self.input.shape[1]
+        total = self.data.shape[1]
         diff = total % batch_size
         # we discard the last examples for now
         if diff != 0:
-            self.input = self.input[: total - diff]
+            self.data = self.data[: total - diff]
             self.target = self.target[: total - diff]
-            total = self.input.shape[1]
+            total = self.data.shape[1]
         
         for epoch in range(epochs):
             # for each epoch, we reshuffle the data and train the network
-            print("***** Epoch:", epoch)
+            print("***** Starting epoch:", epoch)
             # create a list of batches (input and target)
-            self.input, self.target = shuffle(self.input, self.target)
-            batches_input = [self.input[:, k:k + batch_size] for k in range(0, total, batch_size)]
+            self.data, self.target = shuffle(self.data, self.target)
+            batches_input = [self.data[:, k:k + batch_size] for k in range(0, total, batch_size)]
             batches_target = [self.target[:, k:k + batch_size] for k in range(0, total, batch_size)]
             for batch_input, batch_target in zip(batches_input, batches_target):
-                
                 # reset the status of the internal variables each time
                 self._init_outputs()
                 self._init_activations()
@@ -155,7 +158,7 @@ class NeuralNetwork:
             
             if (print_cost):
                 print("Error is ",
-                    self.cost(self.feed_forward(self.input), self.target)
+                    self.cost(self.feed_forward(self.data), self.target)
                     )
 
 
