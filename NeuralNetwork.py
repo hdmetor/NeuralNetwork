@@ -21,32 +21,41 @@ class NeuralNetwork:
         activation (optional): pass the activation function. Defaults to sigmoid. 
         """
 
-    def _init_weights(self, shape):
-        self.weights = [np.random.randn(j , i) for i, j in zip(shape[:-1], shape[1:])]
+    # outputs: output of the layers (before the sigmoid)
+    # activations: outputs after the sigmoid
+    def _init_weights(self):
+        self.weights = [np.random.randn(j , i) for i, j in zip(self.shape[:-1], self.shape[1:])]
 
-    def _init_biases(self, shape):
+    def _init_biases(self):
         self.biases = [np.random.randn(i, 1) for i in self.shape[1:]]
         
-    def _init_output(self):
-        self.output = []
+    def _init_activations(self):
+        self.activations = []
+
+    def _init_outputs(self):
+        self.outputs = []
 
     def __init__(self, shape, activation=sgm):
         self.shape = shape
         self.activation = activation
-        self._init_weights(self.shape)
-        self._init_biases(self.shape)
-        self._init_output()
+        self._init_weights()
+        self._init_biases()
+        self._init_activations()
+        self._init_outputs()
 
     def feed_forward(self, data):
         """Given the input and, return the predicted value according to the current weights."""
         result = data
-        self.output.append(data)
+        self.activations.append(data)
+        self.outputs.append(data)
 
         for w, b  in zip(self.weights, self.biases):
-            result = self.activation(np.dot(w, result) + b)
-            self.output.append(result)
+            result = np.dot(w, result) + b
+            self.outputs.append(result)
+            result = self.activation(result)
+            self.activations.append(result)
 
-        # the last level is the output
+        # the last level is the activated output
         return result
 
     def calculate_deltas(self, input, target):
@@ -58,8 +67,8 @@ class NeuralNetwork:
 
         # calculate delta for the output level
         delta = np.multiply( \
-                    self.activation(self.output[-1]) - target, \
-                    self.activation(self.output[-1], der=True) \
+                    self.activations[-1] - target, \
+                    self.activation(self.outputs[-1], der=True) \
                     )
         self.delta.append(delta)
 
@@ -71,7 +80,7 @@ class NeuralNetwork:
                             self.weights[l].T, 
                             self.delta[steps-l]
                             ),
-                        self.activation(self.output[l], der=True)
+                        self.activation(self.outputs[l], der=True)
                         )
             self.delta.append(delta)
 
@@ -80,7 +89,7 @@ class NeuralNetwork:
 
     def update_weights(self, total, eta):
         """Use backpropagation to update weights"""
-        self.weights =  [self.weights[i] - (eta/total) * np.dot(self.delta[i], self.output[i].T) for i, e in enumerate(self.delta)]
+        self.weights =  [self.weights[i] - (eta/total) * np.dot(self.delta[i], self.activations[i].T) for i, e in enumerate(self.delta)]
 
     def update_biases(self, total, eta):
         """Use backpropagation to update the biases"""
