@@ -93,11 +93,11 @@ class NeuralNetwork:
 
     def update_weights(self, total, eta):
         """Use backpropagation to update weights"""
-        self.weights =  [self.weights[i] - (eta/total) * np.dot(self.deltas[i], self.activations[i].T) for i, e in enumerate(self.deltas)]
+        self.weights =  [w - (eta/total) * np.dot(d, a.T) for w, d, a in zip(self.weights, self.deltas, self.activations)]
 
     def update_biases(self, total, eta):
         """Use backpropagation to update the biases"""
-        self.biases = [self.biases[i] - (eta/total)* self.deltas[i].sum(axis=1)[:, None] for i, e  in enumerate(self.biases)]
+        self.biases = [b - (eta/total)* d.sum(axis=1)[:, None] for b, d  in zip(self.biases, self.deltas)]
 
     def cost(self, predicted, target):
         """Calculate the cost function using the current weights and biases"""
