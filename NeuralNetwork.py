@@ -1,6 +1,5 @@
 import numpy as np
 import math
-from sklearn.utils import shuffle
 
 def sgm(x, der=False):
     """Logistic sigmoid function.
@@ -67,6 +66,8 @@ class NeuralNetwork:
     def feed_forward(self, data, return_labels=False):
         """Given the input and, return the predicted value according to the current weights."""
         result = data
+        # if z = w*a +b
+        # then activations are sigma(z)
         self.activations.append(data)
         self.outputs.append(data)
 
@@ -124,12 +125,16 @@ class NeuralNetwork:
         """Calculate the cost function using the current weights and biases"""
         # the cost is normalized (divided by numer of samples)
         if self.classification:
-            return np.sum(predicted == target) / len(predicted)
+            return np.sum(predicted != target) / len(predicted)
         else:
             return (np.linalg.norm(predicted - target) ** 2)  / predicted.shape[1]
 
 
-    def SGD(self, data, target, batch_size, epochs=20, eta=.3, print_cost=False, classification=True):
+    def train(self, data, target, batch_size, epochs=20, eta=.3, print_cost=False, classification=True, method='SGD'):
+        if method is not 'SGD':
+            print ("This method is not supported at the moment")
+            exit()
+
         self.classification = classification
         # maybe remove this in the future?
         if isinstance(data, list):
