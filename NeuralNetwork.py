@@ -53,8 +53,18 @@ class NeuralNetwork:
             c[l] = 1
         self.target = result
 
+    def labelize(self, data):
+        """Tranform a matrix (where each column is a data) into an integer corresponding to the label."""
+        self.predicetd_labels = []
+        for result in data.T:
+            predicted_label = np.argmax(result)
+            self.predicetd_labels.append(predicted_label)
 
-    def feed_forward(self, data):
+        return self.predicetd_labels
+        print ("Predicates labels ", self.predicetd_labels)
+
+
+    def feed_forward(self, data, return_labels=False):
         """Given the input and, return the predicted value according to the current weights."""
         result = data
         self.activations.append(data)
@@ -66,6 +76,9 @@ class NeuralNetwork:
             result = self.activation(result)
             self.activations.append(result)
 
+        if return_labels:
+            result = self.labelize(result)
+                
         # the last level is the activated output
         return result
 
@@ -110,7 +123,10 @@ class NeuralNetwork:
     def cost(self, predicted, target):
         """Calculate the cost function using the current weights and biases"""
         # the cost is normalized (divided by numer of samples)
-        return (np.linalg.norm(predicted - target) ** 2)  / predicted.shape[1]
+        if self.classification:
+            return np.sum(predicted == target) / len(predicted)
+        else:
+            return (np.linalg.norm(predicted - target) ** 2)  / predicted.shape[1]
 
 
     def SGD(self, data, target, batch_size, epochs=20, eta=.3, print_cost=False, classification=True):
@@ -123,7 +139,9 @@ class NeuralNetwork:
 
         self.data = data.T
         self.target = target.T
-        if classification:
+        if self.classification:
+            self.original_labels = self.target.ravel()
+            print("original_labels ", self.original_labels)
             self.vectorize_output()
         # sanity / shape checks that input / output respect the desired dimensions
         if self.data.shape[0] != self.shape[0]:
@@ -171,10 +189,16 @@ class NeuralNetwork:
                 self.update_weights(batch_size, eta)
                 self.update_biases(batch_size, eta)
 
-            if (print_cost):
-                print("Error is ",
-                    self.cost(self.feed_forward(self.data), self.target)
-                    )
+            if print_cost:
+                if self.classification:
+                    cost = self.cost(
+                            self.feed_forward(self.data, return_labels=True), 
+                            self.original_labels
+                            )
+                    print("Error is {0:.2f}%".format(cost * 100
+                        ))
+                else:
+                    print("Error is ", self.cost(self.feed_forward(self.data), self.target))
 
 
     def predict(self, data):
