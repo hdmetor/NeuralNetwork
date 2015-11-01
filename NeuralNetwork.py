@@ -1,5 +1,4 @@
 import numpy as np
-import pprint as pp
 import math
 from sklearn.utils import shuffle
 
@@ -25,7 +24,6 @@ class NeuralNetwork:
     # activations: outputs after the sigmoid
     def _init_weights(self):
         self.weights = [np.random.randn(j , i) for i, j in zip(self.shape[:-1], self.shape[1:])]
-
     def _init_biases(self):
         self.biases = [np.random.randn(i, 1) for i in self.shape[1:]]
         
@@ -45,6 +43,16 @@ class NeuralNetwork:
         self._init_biases()
         self._init_activations()
         self._init_outputs()
+
+    def vectorize_output(self):
+        """Tranforms a categorical label represented by an integer into a vector."""
+        num_labels = np.unique(self.target).shape[0]
+        num_examples = self.target.shape[1]
+        result = np.zeros((num_labels, num_examples))
+        for l, c in zip(self.target.ravel(), result.T):
+            c[l] = 1
+        self.target = result
+
 
     def feed_forward(self, data):
         """Given the input and, return the predicted value according to the current weights."""
@@ -101,9 +109,12 @@ class NeuralNetwork:
 
     def cost(self, predicted, target):
         """Calculate the cost function using the current weights and biases"""
-        return np.linalg.norm(predicted - target) ** 2
+        # the cost is normalized (divided by numer of samples)
+        return (np.linalg.norm(predicted - target) ** 2)  / predicted.shape[1]
 
-    def SGD(self, data, target, batch_size, epochs=20, eta=.3, print_cost=False):
+
+    def SGD(self, data, target, batch_size, epochs=20, eta=.3, print_cost=False, classification=True):
+        self.classification = classification
         # maybe remove this in the future?
         if isinstance(data, list):
             data = np.array(data)
@@ -112,7 +123,8 @@ class NeuralNetwork:
 
         self.data = data.T
         self.target = target.T
-
+        if classification:
+            self.vectorize_output()
         # sanity / shape checks that input / output respect the desired dimensions
         if self.data.shape[0] != self.shape[0]:
             print('Input and shape of the network not compatible')
@@ -138,7 +150,10 @@ class NeuralNetwork:
             # for each epoch, we reshuffle the data and train the network
             print("***** Starting epoch:", epoch)
             # create a list of batches (input and target)
-            self.data, self.target = shuffle(self.data, self.target)
+            # let's shuffle the data
+            permutation = np.random.permutation(self.data.shape[1])
+            self.data = self.data.T[permutation].T
+            self.target = self.target.T[permutation].T
             batches_input = [self.data[:, k:k + batch_size] for k in range(0, total, batch_size)]
             batches_target = [self.target[:, k:k + batch_size] for k in range(0, total, batch_size)]
             for batch_input, batch_target in zip(batches_input, batches_target):
@@ -155,7 +170,7 @@ class NeuralNetwork:
                 # update internal variables
                 self.update_weights(batch_size, eta)
                 self.update_biases(batch_size, eta)
-            
+
             if (print_cost):
                 print("Error is ",
                     self.cost(self.feed_forward(self.data), self.target)
@@ -168,41 +183,4 @@ class NeuralNetwork:
         return self.feed_forward(data)
 
 
-if __name__ == '__main__':
-
-    X = []
-    y = []
-    X_test = []
-    y_test = []
-    m = 10000
-
-    # sin
-    # for i in range(10):
-    #     d = (2 * math.pi)/10
-    #     X.append([i*d])
-    #     y.append([math.sin(i*d)])
-
-    # x^2
-    
-    # for i in range(m):
-    #     X.append([i/m])
-    #     y.append([(i/m) ** 2])
-    #     X_test.append([(i+1)/m])
-    #     y_test.append([((i+1)/m) ** 2])
-
-    # for xx in np.linspace(-1, 1, 1000):
-    #     for yy in np.linspace(-1, 1, 1000):
-            
-    #         X.append([xx, yy])
-    #         y.append([np.sin(xx - yy) + np.cos(xx + yy)])
-
-    for xx in np.linspace(-10, 10, 10000):
-        X.append([xx])
-        y.append([xx ** 2])
-    #NN = NeuralNetwork([4, 6,7,10,3, 2])
-    NN = NeuralNetwork([1, 2, 1])
-
-
-    print("starting sgd")
-    NN.SGD(X,y,100, epochs=10, print_cost=True)
-    print(NN.predict([[0], [1], [-11]]))
+  
