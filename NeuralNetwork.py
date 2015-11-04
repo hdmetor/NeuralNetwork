@@ -54,13 +54,8 @@ class NeuralNetwork:
 
     def labelize(self, data):
         """Tranform a matrix (where each column is a data) into an integer corresponding to the label."""
-        self.predicetd_labels = []
-        for result in data.T:
-            predicted_label = np.argmax(result)
-            self.predicetd_labels.append(predicted_label)
 
-        return self.predicetd_labels
-        print ("Predicates labels ", self.predicetd_labels)
+        return np.argmax(data, axis=0)
 
 
     def feed_forward(self, data, return_labels=False):
@@ -185,6 +180,7 @@ class NeuralNetwork:
             # we transpose twice to permutate over the columns
             self.data = self.data.T[permutation].T
             self.target = self.target.T[permutation].T
+            self.original_labels = self.original_labels[permutation]
             batches_input = [self.data[:, k:k + batch_size] for k in range(0, self.number_of_examples, batch_size)]
             batches_target = [self.target[:, k:k + batch_size] for k in range(0, self.number_of_examples, batch_size)]
             for batch_input, batch_target in zip(batches_input, batches_target):
@@ -204,12 +200,12 @@ class NeuralNetwork:
 
             if print_cost:
                 if self.classification:
-                    # cost = self.cost(
-                    #         self.feed_forward(self.data, return_labels=True), 
-                    #         self.original_labels
-                    #         )
-                    # print("Error is {0:.2f}%".format(cost * 100
-                    #     ))
+                    cost = self.cost(
+                            self.feed_forward(self.data, return_labels=True), 
+                            self.original_labels
+                            )
+                    print("Error is {0:.2f}%".format(cost * 100
+                        ))
                     pass
                 else:
                     forwarded = self.feed_forward(self.data)
