@@ -53,7 +53,7 @@ class NeuralNetwork:
         self.target = result
 
     def labelize(self, data):
-        """Tranform a matrix (where each column is a data) into an integer corresponding to the label."""
+        """Tranform a matrix (where each column is a data) into an list that contains the argmax of each item."""
 
         return np.argmax(data, axis=0)
 
@@ -133,6 +133,7 @@ class NeuralNetwork:
 
 
     def train(self, data, target, batch_size, epochs=20, eta=.3, print_cost=False, classification=True, method='SGD'):
+        """Train the network using the """
         if method is not 'SGD':
             print ("This method is not supported at the moment")
             exit()
@@ -152,10 +153,12 @@ class NeuralNetwork:
 
         # sanity / shape checks that input / output respect the desired dimensions
         if self.data.shape[0] != self.shape[0]:
-            print('Input and shape of the network not compatible')
+            print('Input and shape of the network not compatible: '.
+                self.data.shape[0], " != ", self.shape[0])
             exit()
         if self.target.shape[0] != self.shape[-1]:
-            print('Output and shape of the network not compatible')
+            print('Output and shape of the network not compatible: ', 
+                self.target.shape[0], " != ", self.shape[-1])
             exit()
 
         # normalize inputs?
@@ -173,9 +176,8 @@ class NeuralNetwork:
         
         for epoch in range(epochs):
             # for each epoch, we reshuffle the data and train the network
-            print("***** Starting epoch:", epoch)
+            print("Starting epoch:", epoch,"/",epochs, end="")
             # create a list of batches (input and target)
-            # let's shuffle the data
             permutation = np.random.permutation(self.number_of_examples)
             # we transpose twice to permutate over the columns
             self.data = self.data.T[permutation].T
@@ -204,12 +206,12 @@ class NeuralNetwork:
                             self.feed_forward(self.data, return_labels=True), 
                             self.original_labels
                             )
-                    print("Error is {0:.2f}%".format(cost * 100
+                    print("\terror is {0:.2f}%\n".format(cost * 100
                         ))
                     pass
                 else:
                     forwarded = self.feed_forward(self.data)
-                    print("Error is ", self.cost(forwarded, self.target))
+                    print("\terror is \n", self.cost(forwarded, self.target))
 
 
     def predict(self, data):
