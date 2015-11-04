@@ -68,6 +68,10 @@ class NeuralNetwork:
         result = data
         # if z = w*a +b
         # then activations are sigma(z)
+
+        self._init_outputs()
+        self._init_activations()
+
         self.activations.append(data)
         self.outputs.append(data)
 
@@ -86,10 +90,12 @@ class NeuralNetwork:
     def calculate_deltas(self, data, target):
         """ Given the input and the output (typically from a batch),
         it calculates the corresponding deltas.
+        It is assumed that the network has just feed forwarded its batch.
+        Deltas are stored in a (n, k) matrix, where n is the dimensions of the 
+        corresponding layer and k is the number of examples.
         """
         # delta for the back propagation
         self._init_deltas()
-        self.feed_forward(data)
 
         # calculate delta for the output level
         delta = np.multiply( \
@@ -119,7 +125,8 @@ class NeuralNetwork:
 
     def update_biases(self, total, eta):
         """Use backpropagation to update the biases"""
-        self.biases = [b - (eta/total)* d.sum(axis=1)[:, None] for b, d  in zip(self.biases, self.deltas)]
+        # summing over the columns of d, as each column is a different example
+        self.biases = [b - (eta/total)* (np.sum(d, axis=1)).reshape(b.shape) for b, d  in zip(self.biases, self.deltas)]
 
     def cost(self, predicted, target):
         """Calculate the cost function using the current weights and biases"""
@@ -146,8 +153,8 @@ class NeuralNetwork:
         self.target = target.T
         if self.classification:
             self.original_labels = self.target.ravel()
-            print("original_labels ", self.original_labels)
             self.vectorize_output()
+
         # sanity / shape checks that input / output respect the desired dimensions
         if self.data.shape[0] != self.shape[0]:
             print('Input and shape of the network not compatible')
@@ -161,49 +168,52 @@ class NeuralNetwork:
         #self.target = (np.array(target) / np.amax(target)).T
         
         # number of total examples
-        total = self.data.shape[1]
-        diff = total % batch_size
+        self.number_of_examples = self.data.shape[1]
+        diff = self.number_of_examples % batch_size
         # we discard the last examples for now
         if diff != 0:
-            self.data = self.data[: total - diff]
-            self.target = self.target[: total - diff]
-            total = self.data.shape[1]
+            self.data = self.data[: self.number_of_examples - diff]
+            self.target = self.target[: self.number_of_examples - diff]
+            self.number_of_examples = self.data.shape[1]
         
         for epoch in range(epochs):
             # for each epoch, we reshuffle the data and train the network
             print("***** Starting epoch:", epoch)
             # create a list of batches (input and target)
             # let's shuffle the data
-            permutation = np.random.permutation(self.data.shape[1])
+            permutation = np.random.permutation(self.number_of_examples)
+            # we transpose twice to permutate over the columns
             self.data = self.data.T[permutation].T
             self.target = self.target.T[permutation].T
-            batches_input = [self.data[:, k:k + batch_size] for k in range(0, total, batch_size)]
-            batches_target = [self.target[:, k:k + batch_size] for k in range(0, total, batch_size)]
+            batches_input = [self.data[:, k:k + batch_size] for k in range(0, self.number_of_examples, batch_size)]
+            batches_target = [self.target[:, k:k + batch_size] for k in range(0, self.number_of_examples, batch_size)]
             for batch_input, batch_target in zip(batches_input, batches_target):
                 # reset the status of the internal variables each time
                 self._init_outputs()
                 self._init_activations()
-                
-                # output values corresponding to the inputs
+
+                # feed forward the input
                 self.feed_forward(batch_input)
-                
-                # do backpropagation
-                # calculate delta for all levels
+
+                # do backpropagation: calculate deltas for all levels
                 self.calculate_deltas(batch_input, batch_target)
+                
                 # update internal variables
                 self.update_weights(batch_size, eta)
                 self.update_biases(batch_size, eta)
 
             if print_cost:
                 if self.classification:
-                    cost = self.cost(
-                            self.feed_forward(self.data, return_labels=True), 
-                            self.original_labels
-                            )
-                    print("Error is {0:.2f}%".format(cost * 100
-                        ))
+                    # cost = self.cost(
+                    #         self.feed_forward(self.data, return_labels=True), 
+                    #         self.original_labels
+                    #         )
+                    # print("Error is {0:.2f}%".format(cost * 100
+                    #     ))
+                    pass
                 else:
-                    print("Error is ", self.cost(self.feed_forward(self.data), self.target))
+                    forwarded = self.feed_forward(self.data)
+                    print("Error is ", self.cost(forwarded, self.target))
 
 
     def predict(self, data):
