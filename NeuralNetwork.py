@@ -10,6 +10,18 @@ def sgm(x, der=False):
         simple = 1 / (1 + np.exp(-x))
         return simple * (1 - simple)
 
+def relu(x, der=False):
+    """Rectifier activation function.
+    Use der=True for the derivative."""
+    if not der:
+        return np.maximum(0, x)
+    else:
+        if x <= 0:
+            return 0
+        else:
+            return 1
+
+
 class NeuralNetwork:
     """Neural Network class.
 
