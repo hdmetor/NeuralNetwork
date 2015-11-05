@@ -1,5 +1,5 @@
 import numpy as np
-import math
+import json
 
 def sgm(x, der=False):
     """Logistic sigmoid function.
@@ -47,13 +47,16 @@ class NeuralNetwork:
     def _init_deltas(self):
         self.deltas = []
 
-    def __init__(self, shape, activation=sgm):
-        self.shape = shape
-        self.activation = activation
-        self._init_weights()
-        self._init_biases()
-        self._init_activations()
-        self._init_outputs()
+    def __init__(self, shape=[], activation=sgm, file=False):
+        if file:
+            self.load(file)
+        else:
+            self.shape = shape
+            self.activation = activation
+            self._init_weights()
+            self._init_biases()
+            self._init_activations()
+            self._init_outputs()
 
     def vectorize_output(self):
         """Tranforms a categorical label represented by an integer into a vector."""
@@ -188,7 +191,7 @@ class NeuralNetwork:
         
         for epoch in range(epochs):
             # for each epoch, we reshuffle the data and train the network
-            print("Starting epoch:", epoch,"/",epochs, end="")
+            print("Starting epoch:", epoch,"/",epochs - 1, end="")
             # create a list of batches (input and target)
             permutation = np.random.permutation(self.number_of_examples)
             # we transpose twice to permutate over the columns
@@ -230,6 +233,23 @@ class NeuralNetwork:
         if isinstance(data, list):
             data = np.array(data).T
         return self.feed_forward(data)
+
+    def save(self, file_location):
+        """Save network's data in a JSON file located in file_location"""
+        data = {
+            "shape" : self.shape,
+            "weights" : [w.tolist() for w in self.weights],
+            "biases" : [b.tolist() for b in self.biases]
+        }
+        with open(file_location, 'w') as fp:
+            json.dump(data, fp)
+
+    def load(self, file_location):
+        with open(file_location, 'r') as fp:
+            data = json.load(fp)
+        self.shape = data["shape"]
+        self.weights = [np.array(w) for w in data["weights"]]
+        self.biases = [np.array(b) for b in data["biases"]]
 
 
   
