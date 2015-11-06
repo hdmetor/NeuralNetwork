@@ -31,6 +31,10 @@ class NeuralNetwork:
         activation (optional): pass the activation function. Defaults to sigmoid. 
         """
 
+    MEMORYERROR_MESSAGE = "Not enougn memory to initialize the network"
+    FILENOTFOUNDERROR_MESSAGE = "There must be at least 2 layer in the network"
+    WRONGSHAPE_MESSAGE = "There must be at least 2 layers in the network"
+
     # outputs: output of the layers (before the sigmoid)
     # activations: outputs after the sigmoid
     def _init_weights(self):
@@ -38,25 +42,46 @@ class NeuralNetwork:
     def _init_biases(self):
         self.biases = [np.random.randn(i, 1) for i in self.shape[1:]]
         
-    def _init_activations(self):
-        self.activations = []
+    def _init_activations(self, size=None):
+        self.activations = [np.zeros((i, size)) for i in self.shape[1:]] if size else []
 
-    def _init_outputs(self):
-        self.outputs = []
+    def _init_outputs(self, size=None):
+        self.outputs = [np.zeros((i, size)) for i in self.shape[1:]] if size else []
 
-    def _init_deltas(self):
-        self.deltas = []
+    def _init_deltas(self, size=None):
+        self.deltas = [np.zeros((i, size)) for i in self.shape[1:]] if size else []
 
-    def __init__(self, shape=[], activation=sgm, file=False):
-        if file:
-            self.load(file)
-        else:
-            self.shape = shape
-            self.activation = activation
-            self._init_weights()
-            self._init_biases()
-            self._init_activations()
-            self._init_outputs()
+    def _init_dropout(self, size=None):
+        self.dropout = [np.zeros((i, size)) for i in self.shape[1:]] if size else []
+
+    def __init__(self, shape_or_file, activation=sgm, dropout=False):
+        if isinstance(shape_or_file, str):
+            try:
+                self.load(file)
+            except FileNotFoundError:
+                print(self.FILENOTFOUNDERROR_MESSAGE)
+                raise
+            except MemoryError:
+                print(self.MEMORYERROR_MESSAGE)
+                raise
+
+        elif isinstance(shape_or_file, list):
+            if len(shape_or_file) < 2:
+                print(self.WRONGSHAPE_MESSAGE)
+                exit()
+
+            try:    
+                self.shape = shape_or_file
+                self.activation = activation
+                self._init_weights()
+                self._init_biases()
+                self._init_activations()
+                self._init_outputs()
+                if dropout:
+                    self._init_dropouts()
+            except MemoryError:
+                print(self.MEMORYERROR_MESSAGE)
+                raise
 
     def vectorize_output(self):
         """Tranforms a categorical label represented by an integer into a vector."""
@@ -76,11 +101,15 @@ class NeuralNetwork:
     def feed_forward(self, data, return_labels=False):
         """Given the input and, return the predicted value according to the current weights."""
         result = data
+        num_examples = data.shape[1]
         # if z = w*a +b
         # then activations are sigma(z)
-
-        self._init_outputs()
-        self._init_activations()
+        try:
+            self._init_outputs()
+            self._init_activations()
+        except MemoryError:
+            print(self.MEMORYERROR_MESSAGE)
+            raise
 
         self.activations.append(data)
         self.outputs.append(data)
@@ -104,8 +133,13 @@ class NeuralNetwork:
         Deltas are stored in a (n, k) matrix, where n is the dimensions of the 
         corresponding layer and k is the number of examples.
         """
+        num_examples = data.shape[1]
         # delta for the back propagation
-        self._init_deltas()
+        try:
+            self._init_deltas()
+        except MemoryError:
+            print(MEMORYERROR_MESSAGE)
+            raise    
 
         # calculate delta for the output level
         delta = np.multiply( \
