@@ -30,8 +30,8 @@ class NeuralNetwork:
     Args:
         shape (list): shape of the network. First element is the input layer, last element
         is the output layer.
-        activation (optional): pass the activation function. Defaults to sigmoid. 
-        """
+        activation (optional): pass the activation function. Defaults to sigmoid.
+    """
 
     MEMORYERROR_MESSAGE = "Not enougn memory to initialize the network"
     FILENOTFOUNDERROR_MESSAGE = "There must be at least 2 layer in the network"
@@ -65,7 +65,7 @@ class NeuralNetwork:
     def __init__(self, shape_or_file, activation=sgm, dropout=False):
         if isinstance(shape_or_file, str):
             try:
-                self.load(file)
+                self.load(shape_or_file)
             except FileNotFoundError:
                 print(self.FILENOTFOUNDERROR_MESSAGE)
                 raise
@@ -108,7 +108,8 @@ class NeuralNetwork:
     def feed_forward(self, data, return_labels=False):
         """Given the input and, return the predicted value according to the current weights."""
         result = data
-        num_examples = data.shape[1]
+        # num examples in this batch = data.shape[1]
+
         # if z = w*a +b
         # then activations are sigma(z)
         try:
@@ -137,15 +138,15 @@ class NeuralNetwork:
         """ Given the input and the output (typically from a batch),
         it calculates the corresponding deltas.
         It is assumed that the network has just feed forwarded its batch.
-        Deltas are stored in a (n, k) matrix, where n is the dimensions of the 
+        Deltas are stored in a (n, k) matrix, where n is the dimensions of the
         corresponding layer and k is the number of examples.
         """
-        num_examples = data.shape[1]
+        # num_examples = data.shape[1]
         # delta for the back propagation
         try:
             self._init_deltas()
         except MemoryError:
-            print(MEMORYERROR_MESSAGE)
+            print(self.MEMORYERROR_MESSAGE)
             raise
 
         # calculate delta for the output level
@@ -189,21 +190,24 @@ class NeuralNetwork:
         else:
             return (np.linalg.norm(predicted - target) ** 2) / predicted.shape[1]
 
-    def train(self, data, target, batch_size, epochs=20, eta=.3, print_cost=False, classification=True, method='SGD'):
-        """Train the network using the """
+    def train(self, train_data=None, train_labels=None, batch_size=100, epochs=20, eta=.3, print_cost=False, classification=True, method='SGD'):
+        """Train the network using the specified method"""
         if method is not 'SGD':
             print("This method is not supported at the moment")
             exit()
 
+        if not all(train_data, train_labels):
+            print("Both trainig data and training labels are required to start training")
+
         self.classification = classification
         # maybe remove this in the future?
-        if isinstance(data, list):
-            data = np.array(data)
-        if isinstance(target, list):
-            target = np.array(target)
+        if isinstance(train_data, list):
+            train_data = np.array(train_data)
+        if isinstance(train_labels, list):
+            train_labels = np.array(train_labels)
 
-        self.data = data.T
-        self.target = target.T
+        self.data = train_data.T
+        self.target = train_labels.T
         if self.classification:
             self.original_labels = self.target.ravel()
             self.vectorize_output()
@@ -220,8 +224,8 @@ class NeuralNetwork:
             exit()
 
         # normalize inputs?
-        #self.input = (np.array(input) / np.amax(input, axis = 0)).T
-        #self.target = (np.array(target) / np.amax(target)).T
+        # self.input = (np.array(input) / np.amax(input, axis = 0)).T
+        # self.target = (np.array(target) / np.amax(target)).T
 
         # number of total examples
         self.number_of_examples = self.data.shape[1]
