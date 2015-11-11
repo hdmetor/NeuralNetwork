@@ -188,9 +188,11 @@ class NeuralNetwork:
         if self.classification:
             return np.sum(predicted != target) / len(predicted)
         else:
-            return (np.linalg.norm(predicted - target) ** 2) / predicted.shape[1]
+            return (np.linalg.norm(predicted - target) ** 2) / \
+                predicted.shape[1]
 
-    def train(self, train_data=None, train_labels=None, batch_size=100, epochs=20, eta=.3, print_cost=False, classification=True, method='SGD'):
+    def train(self, train_data=None, train_labels=None, batch_size=100,
+              epochs=20, eta=.3, print_cost=False, classification=True, method='SGD'):
         """Train the network using the specified method"""
         if method is not 'SGD':
             print("This method is not supported at the moment")
@@ -249,7 +251,8 @@ class NeuralNetwork:
                              for k in range(0, self.number_of_examples, batch_size)]
             batches_target = [self.target[:, k:k + batch_size]
                               for k in range(0, self.number_of_examples, batch_size)]
-            for batch_input, batch_target in zip(batches_input, batches_target):
+            for batch_input, batch_target in zip(
+                    batches_input, batches_target):
                 # reset the status of the internal variables each time
                 self._init_outputs()
                 self._init_activations()
