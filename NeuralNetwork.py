@@ -307,6 +307,9 @@ class NeuralNetwork:
     def load(self, file_location):
         with open(file_location, 'r') as fp:
             data = json.load(fp)
-        self.shape = data["shape"]
-        self.weights = [np.array(w) for w in data["weights"]]
-        self.biases = [np.array(b) for b in data["biases"]]
+        try:
+            self.shape = data["shape"]
+            self.weights = [np.array(w) for w in data["weights"]]
+            self.biases = [np.array(b) for b in data["biases"]]
+        except  KeyError as e:
+            print("Load failed, the json file does not contain the required key ", e)
