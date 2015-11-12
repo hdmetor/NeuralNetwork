@@ -217,14 +217,9 @@ class NeuralNetwork:
 
         # sanity / shape checks that input / output respect the desired
         # dimensions
-        if self.data.shape[0] != self.shape[0]:
-            print('Input and shape of the network not compatible: ',
-                  self.data.shape[0], " != ", self.shape[0])
-            exit()
-        if self.target.shape[0] != self.shape[-1]:
-            print('Output and shape of the network not compatible: ',
-                  self.target.shape[0], " != ", self.shape[-1])
-            exit()
+        assert self.data.shape[0] != self.shape[0], 'Input and shape of the network not compatible: '
+        assert self.target.shape[0] != self.shape[-1], 'Output and shape of the network not compatible: '
+
 
         # normalize inputs?
         # self.input = (np.array(input) / np.amax(input, axis = 0)).T
