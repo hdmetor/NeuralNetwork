@@ -192,22 +192,23 @@ class NeuralNetwork:
                 predicted.shape[1]
 
     def train(self, train_data=None, train_labels=None, batch_size=100,
-              epochs=20, eta=.3, print_cost=False, classification=True, method='SGD'):
+              epochs=20, eta=.3, print_cost=False, classification=True, 
+              test_data=None, test_labels=None, method='SGD'):
         """Train the network using the specified method"""
         if method is not 'SGD':
             print("This method is not supported at the moment")
             exit()
 
-        if not all(train_data, train_labels):
-            print("Both trainig data and training labels are required to start training")
+
+        # if not all([train_data, train_labels]):
+        #     print("Both trainig data and training labels are required to start training")
+        #     return
 
         self.classification = classification
-        # maybe remove this in the future?
-        if isinstance(train_data, list):
-            train_data = np.array(train_data)
-        if isinstance(train_labels, list):
-            train_labels = np.array(train_labels)
-
+        
+        # np.array(np.array(...)) = np.array(...)
+        train_data = np.array(train_data)
+        train_labels = np.array(train_labels)
         self.data = train_data.T
         self.target = train_labels.T
         if self.classification:
@@ -217,7 +218,7 @@ class NeuralNetwork:
         # sanity / shape checks that input / output respect the desired
         # dimensions
         if self.data.shape[0] != self.shape[0]:
-            print('Input and shape of the network not compatible: '.
+            print('Input and shape of the network not compatible: ',
                   self.data.shape[0], " != ", self.shape[0])
             exit()
         if self.target.shape[0] != self.shape[-1]:
@@ -228,6 +229,11 @@ class NeuralNetwork:
         # normalize inputs?
         # self.input = (np.array(input) / np.amax(input, axis = 0)).T
         # self.target = (np.array(target) / np.amax(target)).T
+
+        if test_data is not None:
+            self.test_data = np.array(test_data).T
+        if test_labels is not None:
+            self.test_labels = np.array(test_labels).T
 
         # number of total examples
         self.number_of_examples = self.data.shape[1]
@@ -273,12 +279,17 @@ class NeuralNetwork:
                         self.feed_forward(self.data, return_labels=True),
                         self.original_labels
                     )
-                    print("\terror is {0:.2f}%\n".format(cost * 100
-                                                         ))
-                    pass
+                    print("\terror or the training set is {0:.2f}%\n".format(cost * 100), end='')
+                    if True:#test_data and test_labels:
+                        cost = self.cost(
+                            self.feed_forward(self.test_data, return_labels=True),
+                            self.test_labels
+                        )
+                        print("\terror or the test set is {0:.2f}%\n".format(cost * 100))
+
                 else:
                     forwarded = self.feed_forward(self.data)
-                    print("\terror is \n", self.cost(forwarded, self.target))
+                    print("error is \n", self.cost(forwarded, self.target))
 
     def predict(self, data):
         if isinstance(data, list):
