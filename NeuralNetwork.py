@@ -215,10 +215,10 @@ class NeuralNetwork:
             self.original_labels = self.target.ravel()
             self.vectorize_output()
 
-        # sanity / shape checks that input / output respect the desired
-        # dimensions
-        assert self.data.shape[0] != self.shape[0], 'Input and shape of the network not compatible: '
-        assert self.target.shape[0] != self.shape[-1], 'Output and shape of the network not compatible: '
+        # sanity (shape) checks that input / output respect the desired dimensions
+
+        assert self.data.shape[0] == self.shape[0], 'Input and shape of the network not compatible: '
+        assert self.target.shape[0] == self.shape[-1], 'Output and shape of the network not compatible: '
 
 
         # normalize inputs?
