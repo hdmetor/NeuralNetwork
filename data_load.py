@@ -2,6 +2,9 @@
 http://martin-thoma.com/classify-mnist-with-pybrain/
 """
 
+from __future__ import print_function
+from __future__ import division
+
 from struct import unpack
 import gzip
 import numpy as np
