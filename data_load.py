@@ -60,8 +60,8 @@ def read_images(file_name, data_folder):
         x = np.zeros((number_of_images, rows, cols), dtype=np.uint8) 
 
         for i in range(number_of_images):
-            if i % 10000 == 0:
-                print("Reading image ", i)
+            if i % int(number_of_images / 10) == int(number_of_images / 10) - 1:
+                print("Reading images progress ", int(100 * (i + 1) / number_of_images) , "%")
             for row in range(rows):
                 for col in range(cols):
                     tmp_pixel = images.read(1)  # Just a single byte
