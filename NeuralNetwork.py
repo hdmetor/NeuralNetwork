@@ -7,6 +7,7 @@ import json
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
 def sgm(x, der=False):
     """Logistic sigmoid function.
     Use der=True for the derivative."""
@@ -17,6 +18,7 @@ def sgm(x, der=False):
         return simple * (1 - simple)
 
 
+@np.vectorize
 def relu(x, der=False):
     """Rectifier activation function.
     Use der=True for the derivative."""
@@ -38,8 +40,9 @@ class NeuralNetwork:
         activation (optional): pass the activation function. Defaults to sigmoid.
     """
 
-    MEMORYERROR_MESSAGE = "Not enougn memory to initialize the network"
-    FILENOTFOUNDERROR_MESSAGE = "There must be at least 2 layer in the network"
+    WRONGTYPE_MESSAGE = "The network should be initialized with either a list or a string"
+    MEMORYERROR_MESSAGE = "Not enough memory to initialize the network"
+    FILENOTFOUNDERROR_MESSAGE = "There specified file does not exist"
     WRONGSHAPE_MESSAGE = "There must be at least 2 layers in the network"
 
     # outputs: output of the layers (before the sigmoid)
@@ -96,6 +99,10 @@ class NeuralNetwork:
                 print(self.MEMORYERROR_MESSAGE)
                 raise
 
+        else:
+            print(WRONGTYPE_MESSAGE)
+            return
+
     def vectorize_output(self):
         """Tranforms a categorical label represented by an integer into a vector."""
         num_labels = np.unique(self.target).shape[0]
@@ -107,7 +114,6 @@ class NeuralNetwork:
 
     def labelize(self, data):
         """Tranform a matrix (where each column is a data) into an list that contains the argmax of each item."""
-
         return np.argmax(data, axis=0)
 
     def feed_forward(self, data, return_labels=False):
@@ -116,7 +122,7 @@ class NeuralNetwork:
         # num examples in this batch = data.shape[1]
 
         # if z = w*a +b
-        # then activations are sigma(z)
+        # then activations are \sigma(z)
         try:
             self._init_outputs()
             self._init_activations()
@@ -196,21 +202,30 @@ class NeuralNetwork:
             return (np.linalg.norm(predicted - target) ** 2) / \
                 predicted.shape[1]
 
-    def train(self, train_data=None, train_labels=None, batch_size=100,
-              epochs=20, learning_rate=.3, print_cost=False, classification=True, 
-              test_data=None, test_labels=None, plot=False, method='SGD'):
+    def train(
+            self,
+            train_data=None,
+            train_labels=None,
+            batch_size=100,
+            epochs=20,
+            learning_rate=.3,
+            print_cost=False,
+            classification=True,
+            test_data=None,
+            test_labels=None,
+            plot=False,
+            method='SGD'):
         """Train the network using the specified method"""
         if method is not 'SGD':
             print("This method is not supported at the moment")
             exit()
-
 
         if train_data is None or train_labels is None:
             print("Both trainig data and training labels are required to start training")
             return
 
         self.classification = classification
-        
+
         # np.array(np.array(...)) = np.array(...)
         train_data = np.array(train_data)
         train_labels = np.array(train_labels)
@@ -220,9 +235,12 @@ class NeuralNetwork:
             self.original_labels = self.target.ravel()
             self.vectorize_output()
 
-        # sanity (shape) checks that input / output respect the desired dimensions
-        assert self.data.shape[0] == self.shape[0], ('Input and shape of the network not compatible: ', self.data.shape[0], " != ", self.shape[0]) 
-        assert self.target.shape[0] == self.shape[-1], ('Output and shape of the network not compatible: ', self.target.shape[0], " != ", self.shape[-1])
+        # sanity (shape) checks that input / output respect the desired
+        # dimensions
+        assert self.data.shape[0] == self.shape[0], \
+            ('Input and shape of the network not compatible: ', self.data.shape[0], " != ", self.shape[0])
+        assert self.target.shape[0] == self.shape[-1], \
+            ('Output and shape of the network not compatible: ', self.target.shape[0], " != ", self.shape[-1])
 
         if plot:
             self.training_error = []
@@ -247,18 +265,22 @@ class NeuralNetwork:
 
         for epoch in range(epochs):
             # for each epoch, we reshuffle the data and train the network
-            print("Starting epoch:", epoch, "/", epochs - 1, end=" ")
+
+            print("Starting epoch:", epoch +1 , "/", epochs, end=" ")
+
             # create a list of batches (input and target)
             permutation = np.random.permutation(self.number_of_examples)
             # we transpose twice to permutate over the columns
             self.data = self.data.T[permutation].T
             self.target = self.target.T[permutation].T
+ 
             if classification:
                 self.original_labels = self.original_labels[permutation]
             batches_input = [self.data[:, k:k + batch_size]
                              for k in range(0, self.number_of_examples, batch_size)]
             batches_target = [self.target[:, k:k + batch_size]
                               for k in range(0, self.number_of_examples, batch_size)]
+
             for batch_input, batch_target in zip(
                     batches_input, batches_target):
                 # reset the status of the internal variables each time
@@ -281,26 +303,34 @@ class NeuralNetwork:
                         self.feed_forward(self.data, return_labels=True),
                         self.original_labels
                     )
-                    if plot: self.training_error.append(cost)
-                    print("\terror or the training set is {0:.2f}%\n".format(cost * 100), end='')
+                    if plot:
+                        self.training_error.append(cost)
+                    print("\terror or the training set is {0:.2f}%\n".format(
+                        cost * 100), end='')
                     if test_data is not None and test_labels is not None:
                         cost = self.cost(
-                            self.feed_forward(self.test_data, return_labels=True),
+                            self.feed_forward(
+                                self.test_data, return_labels=True),
                             self.test_labels
                         )
-                        if plot: self.testing_error.append(cost)
-                        print("\terror or the test set is {0:.2f}%\n".format(cost * 100))
+                        if plot:
+                            self.testing_error.append(cost)
+                        print(
+                            "\terror or the test set is {0:.2f}%\n".format(
+                                cost * 100))
 
                 else:
                     forwarded = self.feed_forward(self.data)
                     print("error is \n", self.cost(forwarded, self.target))
 
         if plot:
-            plotting_data = {"TrainingError" : self.training_error}
+            plotting_data = {"TrainingError": self.training_error}
             if test_data is not None and test_labels is not None:
                 plotting_data["Testing Error"] = self.testing_error
+            fig, ax = plt.subplots()
             errors = pd.DataFrame(plotting_data)
-            errors.plot()
+            errors.plot(ax=ax)
+            plt.show()
 
     def predict(self, data):
         if isinstance(data, list):
@@ -324,5 +354,6 @@ class NeuralNetwork:
             self.shape = data["shape"]
             self.weights = [np.array(w) for w in data["weights"]]
             self.biases = [np.array(b) for b in data["biases"]]
-        except  KeyError as e:
+        except KeyError as e:
             print("Load failed, the json file does not contain the required key ", e)
+            raise
