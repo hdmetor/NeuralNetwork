@@ -16,7 +16,7 @@ Seriously, try it, it works (Python 3 only for now)!
 
 ## Create the network
 
-First of all we need to create a `NeuralNetwork` object. It can be initialized in two ways:
+First of we need to create a `NeuralNetwork` object. It can be initialized in two ways:
 
 - with a list containing the number of neurons in each layer:
 
@@ -78,11 +78,15 @@ The `train` method contains some advanced options not described  in the base tut
 
 - `print_cost=False`
 
-    If set to true, it will print the value of the cost function at the end of each epochs. Note that this might slow the training, since it requires a new forward passage of the data through the network.
+    If set to `True`, it will print the value of the cost function at the end of each epochs. Note that this might slow the training, since it requires a new forward passage of the data through the network.
 
 - `test_data=None, test_labels=None`
 
-    If `print_cost` is True, we can also pass test data and labels to print the accuracy on such dataset. As before, this might cause a slowdown due to an extra forward passage.
+    If `print_cost` is `True`, we can also pass test data and labels to print the accuracy on such dataset. As before, this might cause a slowdown due to an extra forward passage.
+
+- `plot=False`
+
+    If `print_cost` is also `True` at the end the function will produce a plot showing the error rate for the training test at each iteration. If `test_data` and `training_data` are also passed, the plot will also contain a plot of the error in the testing set. 
 
 # Other methods
 
@@ -102,4 +106,14 @@ Load a previously saved network from disk. Note that the JSON file must contain 
 - `NN.predict` 
 
 As mentioned before, used to predict on new data. `NN.predict(new_data)` will return a `np.array` with the predicted result.
+
+# Future plans
+
+I think I have learned enough from this project, and I don't plan to add new features. If you find any bugs, please feel free to open a ticket.
+
+I wrote some extra code: I started with the dropout mask and added the ReLu activation function.
+I think that I could write the 90% of the code pretty quickly, but the remaining part will definitely [take too much time](https://en.wikipedia.org/wiki/Ninety-ninety_rule). I prefer to concentrate to other projects.
+
+
+
 
