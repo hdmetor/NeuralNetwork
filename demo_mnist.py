@@ -7,7 +7,7 @@ import NeuralNetwork as nn
 
 def main():
     shape = [784, 50, 30, 10]
-    net = nn.NeuralNetwork(shape)
+    net = nn.NeuralNetwork(shape, activation=nn.sgm)
 
     print("Gathering the training data")
     X_train, y_train = dl.get_images_and_labels('train')
@@ -22,8 +22,16 @@ def main():
     X_test = X_test.reshape(10000, 784)
 
     print("Starting the training")
-    net.train(train_data=X_train, train_labels=y_train, batch_size=200, epochs=2000, learning_rate=3.,
-              print_cost=True, test_data=X_test, test_labels=y_test, plot=True)
+    net.train(
+            train_data=X_train,
+            train_labels=y_train,
+            batch_size=200,
+            epochs=200,
+            learning_rate=3.,
+            print_cost=True,
+            test_data=X_test,
+            test_labels=y_test,
+            plot=True)
 
 
 if __name__ == '__main__':
