@@ -8,7 +8,7 @@ The only optimization used is the vectorization when doing mini batch, which giv
 
 # How it works
 
-TL;DR version: try the [MNIST demo](demo_mnist.md) which (if needed) will download the MNIST data, train a network on the train data, and print the cost on both train and test data at each iteration.
+TL;DR version: try the [MNIST demo](mnist.md) which (if needed) will download the MNIST data, train a network on the train data, and print the cost on both train and test data at each iteration.
 
     python3 demo_mnist.py
 
