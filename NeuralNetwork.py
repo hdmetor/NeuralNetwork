@@ -4,6 +4,7 @@ from __future__ import division
 import numpy as np
 import json
 
+import pandas as pd
 
 def sgm(x, der=False):
     """Logistic sigmoid function.
@@ -196,16 +197,16 @@ class NeuralNetwork:
 
     def train(self, train_data=None, train_labels=None, batch_size=100,
               epochs=20, eta=.3, print_cost=False, classification=True, 
-              test_data=None, test_labels=None, method='SGD'):
+              test_data=None, test_labels=None, plot=False, method='SGD'):
         """Train the network using the specified method"""
         if method is not 'SGD':
             print("This method is not supported at the moment")
             exit()
 
 
-        # if not all([train_data, train_labels]):
-        #     print("Both trainig data and training labels are required to start training")
-        #     return
+        if train_data is None or train_labels is None:
+            print("Both trainig data and training labels are required to start training")
+            return
 
         self.classification = classification
         
@@ -219,19 +220,20 @@ class NeuralNetwork:
             self.vectorize_output()
 
         # sanity (shape) checks that input / output respect the desired dimensions
+        assert self.data.shape[0] == self.shape[0], ('Input and shape of the network not compatible: ', self.data.shape[0], " != ", self.shape[0]) 
+        assert self.target.shape[0] == self.shape[-1], ('Output and shape of the network not compatible: ', self.target.shape[0], " != ", self.shape[-1])
 
-        assert self.data.shape[0] == self.shape[0], 'Input and shape of the network not compatible: '
-        assert self.target.shape[0] == self.shape[-1], 'Output and shape of the network not compatible: '
-
+        if plot:
+            self.training_error = []
 
         # normalize inputs?
         # self.input = (np.array(input) / np.amax(input, axis = 0)).T
         # self.target = (np.array(target) / np.amax(target)).T
 
-        if test_data is not None:
+        if test_data is not None and test_labels is not None:
             self.test_data = np.array(test_data).T
-        if test_labels is not None:
             self.test_labels = np.array(test_labels).T
+            self.testing_error = []
 
         # number of total examples
         self.number_of_examples = self.data.shape[1]
@@ -244,13 +246,14 @@ class NeuralNetwork:
 
         for epoch in range(epochs):
             # for each epoch, we reshuffle the data and train the network
-            print("Starting epoch:", epoch, "/", epochs - 1, end="")
+            print("Starting epoch:", epoch, "/", epochs - 1, end=" ")
             # create a list of batches (input and target)
             permutation = np.random.permutation(self.number_of_examples)
             # we transpose twice to permutate over the columns
             self.data = self.data.T[permutation].T
             self.target = self.target.T[permutation].T
-            self.original_labels = self.original_labels[permutation]
+            if classification:
+                self.original_labels = self.original_labels[permutation]
             batches_input = [self.data[:, k:k + batch_size]
                              for k in range(0, self.number_of_examples, batch_size)]
             batches_target = [self.target[:, k:k + batch_size]
@@ -277,17 +280,26 @@ class NeuralNetwork:
                         self.feed_forward(self.data, return_labels=True),
                         self.original_labels
                     )
+                    if plot: self.training_error.append(cost)
                     print("\terror or the training set is {0:.2f}%\n".format(cost * 100), end='')
-                    if True:#test_data and test_labels:
+                    if test_data is not None and test_labels is not None:
                         cost = self.cost(
                             self.feed_forward(self.test_data, return_labels=True),
                             self.test_labels
                         )
+                        if plot: self.testing_error.append(cost)
                         print("\terror or the test set is {0:.2f}%\n".format(cost * 100))
 
                 else:
                     forwarded = self.feed_forward(self.data)
                     print("error is \n", self.cost(forwarded, self.target))
+
+        if plot:
+            plotting_data = {"TrainingError" : self.training_error}
+            if test_data is not None and test_labels is not None:
+                plotting_data["Testing Error"] = self.testing_error
+            errors = pd.DataFrame(plotting_data)
+            errors.plot()
 
     def predict(self, data):
         if isinstance(data, list):
