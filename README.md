@@ -68,7 +68,7 @@ The `train` method contains some advanced options not described  in the base tut
 
     Number of desired training epochs.
 
-- `eta=.3`
+- `learning_rate=.3`
 
     Learning rate for the network. Note that is remains constant during the whole training process.
 

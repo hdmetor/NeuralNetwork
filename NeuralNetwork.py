@@ -5,6 +5,7 @@ import numpy as np
 import json
 
 import pandas as pd
+import matplotlib.pyplot as plt
 
 def sgm(x, der=False):
     """Logistic sigmoid function.
@@ -175,15 +176,15 @@ class NeuralNetwork:
         # delta[i] contains the delta for layer i+1
         self.deltas.reverse()
 
-    def update_weights(self, total, eta):
+    def update_weights(self, total, learning_rate):
         """Use backpropagation to update weights"""
-        self.weights = [w - (eta / total) * np.dot(d, a.T)
+        self.weights = [w - (learning_rate / total) * np.dot(d, a.T)
                         for w, d, a in zip(self.weights, self.deltas, self.activations)]
 
-    def update_biases(self, total, eta):
+    def update_biases(self, total, learning_rate):
         """Use backpropagation to update the biases"""
         # summing over the columns of d, as each column is a different example
-        self.biases = [b - (eta / total) * (np.sum(d, axis=1)).reshape(b.shape)
+        self.biases = [b - (learning_rate / total) * (np.sum(d, axis=1)).reshape(b.shape)
                        for b, d in zip(self.biases, self.deltas)]
 
     def cost(self, predicted, target):
@@ -196,7 +197,7 @@ class NeuralNetwork:
                 predicted.shape[1]
 
     def train(self, train_data=None, train_labels=None, batch_size=100,
-              epochs=20, eta=.3, print_cost=False, classification=True, 
+              epochs=20, learning_rate=.3, print_cost=False, classification=True, 
               test_data=None, test_labels=None, plot=False, method='SGD'):
         """Train the network using the specified method"""
         if method is not 'SGD':
@@ -271,8 +272,8 @@ class NeuralNetwork:
                 self.calculate_deltas(batch_input, batch_target)
 
                 # update internal variables
-                self.update_weights(batch_size, eta)
-                self.update_biases(batch_size, eta)
+                self.update_weights(batch_size, learning_rate)
+                self.update_biases(batch_size, learning_rate)
 
             if print_cost:
                 if self.classification:
