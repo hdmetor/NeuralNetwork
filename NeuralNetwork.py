@@ -84,7 +84,7 @@ class NeuralNetwork:
         elif isinstance(shape_or_file, list):
             if len(shape_or_file) < 2:
                 print(self.WRONGSHAPE_MESSAGE)
-                exit()
+                raise ValueError
 
             try:
                 self.shape = shape_or_file
@@ -101,7 +101,7 @@ class NeuralNetwork:
 
         else:
             print(WRONGTYPE_MESSAGE)
-            return
+            raise TypeError
 
     def vectorize_output(self):
         """Tranforms a categorical label represented by an integer into a vector."""
